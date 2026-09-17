@@ -444,9 +444,24 @@ function renderMap() {
 }
 
 function render() {
-  let fil = filter === 'archived' ? listings.filter(l => l.status === 'archived') : filter === 'all' ? listings.filter(l => l.status !== 'archived') :
-    filter === 'fav' ? listings.filter(l => l.favorited && l.status !== 'archived') :
-    listings.filter(l => l.status === filter && l.status !== 'archived');
+  // Sort listings first
+  const avgRating = l => {
+    const r = [l.ratingEric, l.ratingShelby].filter(x => x !== null && x !== undefined);
+    return r.length ? r.reduce((a,c)=>a+c,0)/r.length : -1;
+  };
+  const sorted = [...listings].sort((a,b) => {
+    if (sortBy === 'date-desc') return a.added < b.added ? 1 : -1;
+    if (sortBy === 'date-asc') return a.added > b.added ? 1 : -1;
+    if (sortBy === 'price-asc') return (a.rent||0) - (b.rent||0);
+    if (sortBy === 'price-desc') return (b.rent||0) - (a.rent||0);
+    if (sortBy === 'rating-desc') return avgRating(b) - avgRating(a);
+    if (sortBy === 'rating-asc') return avgRating(a) - avgRating(b);
+    return 0;
+  });
+
+  let fil = filter === 'archived' ? sorted.filter(l => l.status === 'archived') : filter === 'all' ? sorted.filter(l => l.status !== 'archived') :
+    filter === 'fav' ? sorted.filter(l => l.favorited && l.status !== 'archived') :
+    sorted.filter(l => l.status === filter && l.status !== 'archived');
 
   document.getElementById('s-total').textContent = listings.filter(l=>l.status!=='archived').length;
   document.getElementById('s-active').textContent = listings.filter(l=>l.status==='active').length;
@@ -540,19 +555,6 @@ onSnapshot(col, async (snap) => {
     }
   } else {
     listings = snap.docs.map(d => ({id:d.id,...d.data()}));
-    listings.sort((a,b) => {
-      const avgRating = l => {
-        const r = [l.ratingEric, l.ratingShelby].filter(x => x !== null && x !== undefined);
-        return r.length ? r.reduce((a,b)=>a+b,0)/r.length : -1;
-      };
-      if (sortBy === 'date-desc') return a.added < b.added ? 1 : -1;
-      if (sortBy === 'date-asc') return a.added > b.added ? 1 : -1;
-      if (sortBy === 'price-asc') return (a.rent||0) - (b.rent||0);
-      if (sortBy === 'price-desc') return (b.rent||0) - (a.rent||0);
-      if (sortBy === 'rating-desc') return avgRating(b) - avgRating(a);
-      if (sortBy === 'rating-asc') return avgRating(a) - avgRating(b);
-      return 0;
-    });
     // geocode any without coords
     for (const l of listings) {
       if (!l.lat || !l.lng) {
