@@ -7,194 +7,145 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
-  :root {
-    --bg: #0f1117;
-    --surface: #1a1d27;
-    --surface2: #22263a;
-    --border: #2e3250;
-    --border2: #3a3f60;
-    --text: #e8eaf6;
-    --text2: #9096b8;
-    --text3: #5a6080;
-    --accent: #6c7fff;
-    --accent-bg: rgba(108,127,255,0.12);
-    --green: #4caf82;
-    --green-bg: rgba(76,175,130,0.13);
-    --yellow: #f0b429;
-    --yellow-bg: rgba(240,180,41,0.13);
-    --red: #f06292;
-    --red-bg: rgba(240,98,146,0.13);
-    --purple: #b39ddb;
-    --purple-bg: rgba(179,157,219,0.13);
-    --like-color: #4caf82;
-    --like-bg: rgba(76,175,130,0.13);
-    --dislike-color: #f06292;
-    --dislike-bg: rgba(240,98,146,0.13);
-    --fav: #f0b429;
-    --radius: 10px;
-    --radius-sm: 6px;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
-  .app { max-width: 760px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
-  .top-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
-  .top-header h1 { font-size: 20px; font-weight: 600; }
-  .top-header span { font-size: 13px; color: var(--text2); }
-  .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 1.25rem; }
-  .stat { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: .65rem .75rem; text-align: center; }
-  .stat-val { font-size: 22px; font-weight: 600; }
-  .stat-lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
-
-  /* TABS */
-  .tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; background: var(--surface); border-radius: var(--radius); padding: 4px; }
-  .tab { flex: 1; text-align: center; padding: .5rem; font-size: 13px; font-weight: 500; border-radius: var(--radius-sm); cursor: pointer; color: var(--text2); border: none; background: transparent; transition: all .15s; }
-  .tab.active { background: var(--accent); color: #fff; }
-
-  .sl { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .5rem; }
-  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
-  .fbtn { font-size: 12px; padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; }
-  .fbtn.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
-  .add-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: .75rem; margin-bottom: 1rem; font-size: 14px; font-weight: 500; cursor: pointer; border-radius: var(--radius); border: 0.5px dashed var(--border2); background: transparent; color: var(--text2); }
-  .add-btn:hover { background: var(--surface); color: var(--text); }
-
-  /* FORM */
-  .form-wrap { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .fr { margin-bottom: .75rem; }
-  .fr label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; }
-  .fr input, .fr select, .fr textarea { width: 100%; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-size: 13px; padding: 8px 10px; outline: none; transition: border .15s; }
-  .fr input:focus, .fr select:focus, .fr textarea:focus { border-color: var(--accent); }
-  .fr textarea { height: 70px; resize: none; }
-  .fr select option { background: #1a1d27; }
-  .fsec { border-top: 0.5px solid var(--border); padding-top: .75rem; margin-top: .75rem; }
-  .form-actions { display: flex; gap: 8px; margin-top: 1rem; }
-  .btn-save { flex: 1; padding: .6rem; font-size: 14px; font-weight: 600; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; }
-  .btn-cancel { padding: .6rem 1rem; font-size: 14px; background: transparent; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); color: var(--text2); cursor: pointer; }
-
-  /* LISTING CARD */
-  .listing { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem; margin-bottom: .75rem; border-left: 3px solid transparent; }
-  .listing.price-green { border-left-color: var(--green); }
-  .listing.price-yellow { border-left-color: var(--yellow); }
-  .listing.price-red { border-left-color: var(--red); }
-  .listing.favorited { border-left-color: var(--fav); }
-  .listing.archived { opacity: 0.6; border-left-color: var(--text3); }
-  .lh { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: .5rem; }
-  .lh-left { flex: 1; min-width: 0; }
-  .lh-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
-  .la { font-size: 14px; font-weight: 600; }
-  .lm { font-size: 12px; color: var(--text2); margin-top: 2px; }
-  .lp { font-size: 15px; font-weight: 600; }
-  .price-green .lp { color: var(--green); }
-  .price-yellow .lp { color: var(--yellow); }
-  .price-red .lp { color: var(--red); }
-  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
-  .badge-active { background: var(--accent-bg); color: var(--accent); }
-  .badge-applied { background: var(--yellow-bg); color: var(--yellow); }
-  .badge-rejected { background: var(--red-bg); color: var(--red); }
-  .badge-tour { background: var(--purple-bg); color: var(--purple); }
-  .badge-withdrawn { background: var(--surface2); color: var(--text3); }
-  .badge-archived { background: var(--surface2); color: var(--text3); border: 0.5px solid var(--border2); }
-  .fav-btn { background: none; border: none; cursor: pointer; font-size: 18px; opacity: .4; line-height: 1; }
-  .fav-btn.on { opacity: 1; }
-  .pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-  .pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border2); }
-  .lnotes { font-size: 12px; color: var(--text2); margin-top: .5rem; font-style: italic; line-height: 1.4; }
-  .llink { font-size: 12px; color: var(--accent); margin-top: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
-
-  /* LIKES / DISLIKES */
-  .likes-sec { margin-top: .75rem; border-top: 0.5px solid var(--border); padding-top: .65rem; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .chip-row { display: flex; flex-wrap: wrap; gap: 4px; min-height: 10px; margin-bottom: 4px; }
-  .tag-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 8px; border-radius: 20px; cursor: pointer; }
-  .tag-chip.like { background: var(--like-bg); color: var(--like-color); border: 0.5px solid var(--like-color); }
-  .tag-chip.dislike { background: var(--dislike-bg); color: var(--dislike-color); border: 0.5px solid var(--dislike-color); }
-  .tag-chip .tx { font-size: 11px; opacity: .6; }
-  .quick-inp { display: flex; gap: 4px; }
-  .quick-inp input { flex: 1; font-size: 12px; padding: 5px 8px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); outline: none; }
-  .quick-inp input:focus { border-color: var(--accent); }
-  .qi-add { padding: 0 8px; font-size: 13px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-weight: 600; }
-  .qi-add.like { background: var(--like-bg); color: var(--like-color); }
-  .qi-add.dislike { background: var(--dislike-bg); color: var(--dislike-color); }
-
-  /* RATINGS */
-  .ratings-sec { margin-top: .75rem; border-top: 0.5px solid var(--border); padding-top: .65rem; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .rdots { display: flex; gap: 3px; flex-wrap: wrap; }
-  .rdot { width: 24px; height: 24px; border-radius: 50%; border: 0.5px solid var(--border2); background: transparent; cursor: pointer; font-size: 10px; font-weight: 600; color: var(--text3); display: inline-flex; align-items: center; justify-content: center; }
-  .rdot.low { background: var(--yellow-bg); color: var(--yellow); border-color: var(--yellow); }
-  .rdot.mid { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
-  .rdot.high { background: var(--green-bg); color: var(--green); border-color: var(--green); }
-  .rval { font-size: 12px; color: var(--text2); margin-top: 4px; }
-
-  /* FOLLOW-UPS */
-  .fu-sec { margin-top: .75rem; border-top: 0.5px solid var(--border); padding-top: .65rem; }
-  .fu-item { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; }
-  .fu-cb { margin-top: 2px; flex-shrink: 0; accent-color: var(--accent); cursor: pointer; }
-  .fu-txt { font-size: 12px; flex: 1; line-height: 1.4; }
-  .fu-txt.done { text-decoration: line-through; color: var(--text3); }
-  .fu-del { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 14px; padding: 0; }
-  .fu-del:hover { color: var(--red); }
-  .fu-inp-row { display: flex; gap: 6px; margin-top: 6px; }
-  .fu-inp-row input { flex: 1; font-size: 12px; padding: 6px 10px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); outline: none; }
-  .fu-inp-row input:focus { border-color: var(--accent); }
-  .fu-add { padding: 0 12px; font-size: 12px; background: var(--accent-bg); border: 0.5px solid var(--accent); color: var(--accent); border-radius: var(--radius-sm); cursor: pointer; }
-
-  /* CARD ACTIONS */
-  .card-actions { display: flex; gap: 6px; margin-top: .75rem; flex-wrap: wrap; }
-  .abtn { font-size: 11px; padding: 3px 10px; border-radius: 20px; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; }
-  .abtn:hover { background: var(--surface2); }
-  .abtn.danger { color: var(--red); border-color: var(--red); }
-  .ldate { font-size: 11px; color: var(--text3); margin-top: .5rem; }
-
-  /* MAP */
-  #map-view { display: none; }
-  #map { width: 100%; height: 520px; border-radius: var(--radius); border: 0.5px solid var(--border); overflow: hidden; margin-bottom: 1rem; }
-  .map-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 1rem; }
-  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); }
-  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-  .map-listing-list { display: grid; gap: 8px; }
-  .map-listing-row { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: .65rem .9rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
-  .map-listing-row:hover { border-color: var(--accent); }
-  .map-listing-row .la { font-size: 13px; }
-  .map-listing-row .lp { font-size: 13px; }
-  .no-geo { font-size: 12px; color: var(--text3); font-style: italic; }
-
-
-  .sort-row { display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; }
-  .sort-row label { font-size: 12px; color: var(--text2); white-space: nowrap; }
-  .sort-select { font-size: 12px; padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border2); background: var(--surface2); color: var(--text); outline: none; cursor: pointer; }
-  .sort-select:focus { border-color: var(--accent); }
-  .empty { text-align: center; padding: 3rem 1rem; color: var(--text3); font-size: 14px; }
-  .loading { text-align: center; padding: 2rem; color: var(--text3); }
-  .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: .6rem 1.2rem; font-size: 13px; color: var(--text); box-shadow: 0 4px 20px rgba(0,0,0,.4); opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 9999; }
-  .toast.show { opacity: 1; }
-
-  .leaflet-popup-content-wrapper { background: #1a1d27 !important; color: #e8eaf6 !important; border: 0.5px solid #2e3250 !important; border-radius: 8px !important; }
-  .leaflet-popup-tip { background: #1a1d27 !important; }
-  .leaflet-popup-content { margin: 10px 14px !important; }
-
-  @media (max-width: 480px) {
-    .stats { grid-template-columns: repeat(2,1fr); }
-    .form-grid { grid-template-columns: 1fr; }
-    .ratings-sec, .likes-sec { grid-template-columns: 1fr; }
-  }
+:root {
+  --bg:#0f1117;--surface:#1a1d27;--surface2:#22263a;--border:#2e3250;--border2:#3a3f60;
+  --text:#e8eaf6;--text2:#9096b8;--text3:#5a6080;
+  --accent:#6c7fff;--accent-bg:rgba(108,127,255,0.12);
+  --green:#4caf82;--green-bg:rgba(76,175,130,0.13);
+  --yellow:#f0b429;--yellow-bg:rgba(240,180,41,0.13);
+  --red:#f06292;--red-bg:rgba(240,98,146,0.13);
+  --purple:#b39ddb;--purple-bg:rgba(179,157,219,0.13);
+  --fav:#f0b429;--radius:10px;--radius-sm:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;}
+.app{max-width:760px;margin:0 auto;padding:1.5rem 1rem 4rem;}
+.top-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;}
+.top-header h1{font-size:20px;font-weight:600;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.25rem;}
+.stat{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:.65rem .75rem;text-align:center;}
+.stat-val{font-size:22px;font-weight:600;}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:2px;}
+.tabs{display:flex;gap:4px;margin-bottom:1.25rem;background:var(--surface);border-radius:var(--radius);padding:4px;}
+.tab{flex:1;text-align:center;padding:.5rem;font-size:13px;font-weight:500;border-radius:var(--radius-sm);cursor:pointer;color:var(--text2);border:none;background:transparent;}
+.tab.active{background:var(--accent);color:#fff;}
+.sl{font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.75rem;}
+.fbtn{font-size:12px;padding:4px 12px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;}
+.fbtn.active{background:var(--accent-bg);color:var(--accent);border-color:var(--accent);}
+.sort-row{display:flex;align-items:center;gap:8px;margin-bottom:1rem;}
+.sort-row label{font-size:12px;color:var(--text2);white-space:nowrap;}
+.sort-select{font-size:12px;padding:4px 10px;border-radius:20px;border:0.5px solid var(--border2);background:var(--surface2);color:var(--text);outline:none;cursor:pointer;}
+.add-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:.75rem;margin-bottom:1rem;font-size:14px;font-weight:500;cursor:pointer;border-radius:var(--radius);border:0.5px dashed var(--border2);background:transparent;color:var(--text2);}
+.add-btn:hover{background:var(--surface);color:var(--text);}
+.form-wrap{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.fr{margin-bottom:.75rem;}
+.fr label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px;}
+.fr input,.fr select,.fr textarea{width:100%;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-size:13px;padding:8px 10px;outline:none;}
+.fr input:focus,.fr select:focus,.fr textarea:focus{border-color:var(--accent);}
+.fr textarea{height:70px;resize:none;}
+.fr select option{background:#1a1d27;}
+.fsec{border-top:0.5px solid var(--border);padding-top:.75rem;margin-top:.75rem;}
+.form-actions{display:flex;gap:8px;margin-top:1rem;}
+.btn-save{flex:1;padding:.6rem;font-size:14px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;}
+.btn-cancel{padding:.6rem 1rem;font-size:14px;background:transparent;border:0.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--text2);cursor:pointer;}
+.listing{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:1rem;margin-bottom:.75rem;border-left:3px solid transparent;}
+.listing.price-green{border-left-color:var(--green);}
+.listing.price-yellow{border-left-color:var(--yellow);}
+.listing.price-red{border-left-color:var(--red);}
+.listing.favorited{border-left-color:var(--fav);}
+.listing.archived{opacity:0.6;border-left-color:var(--text3);}
+.lh{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:.5rem;}
+.lh-left{flex:1;min-width:0;}
+.lh-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.la{font-size:14px;font-weight:600;}
+.lm{font-size:12px;color:var(--text2);margin-top:2px;}
+.lp{font-size:15px;font-weight:600;}
+.price-green .lp{color:var(--green);}
+.price-yellow .lp{color:var(--yellow);}
+.price-red .lp{color:var(--red);}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;}
+.badge-active{background:var(--accent-bg);color:var(--accent);}
+.badge-applied{background:var(--yellow-bg);color:var(--yellow);}
+.badge-rejected{background:var(--red-bg);color:var(--red);}
+.badge-tour{background:var(--purple-bg);color:var(--purple);}
+.badge-withdrawn,.badge-archived{background:var(--surface2);color:var(--text3);border:0.5px solid var(--border2);}
+.fav-btn{background:none;border:none;cursor:pointer;font-size:18px;opacity:.4;line-height:1;}
+.fav-btn.on{opacity:1;}
+.pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:20px;background:var(--surface2);color:var(--text2);border:0.5px solid var(--border2);}
+.lnotes{font-size:12px;color:var(--text2);margin-top:.5rem;font-style:italic;line-height:1.4;}
+.llink{font-size:12px;color:var(--accent);margin-top:4px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;}
+.likes-sec{margin-top:.75rem;border-top:0.5px solid var(--border);padding-top:.65rem;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.chip-row{display:flex;flex-wrap:wrap;gap:4px;min-height:10px;margin-bottom:4px;}
+.tag-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:3px 8px;border-radius:20px;cursor:pointer;}
+.tag-chip.like{background:rgba(76,175,130,0.13);color:#4caf82;border:0.5px solid #4caf82;}
+.tag-chip.dislike{background:rgba(240,98,146,0.13);color:#f06292;border:0.5px solid #f06292;}
+.tag-chip .tx{font-size:11px;opacity:.6;}
+.quick-inp{display:flex;gap:4px;}
+.quick-inp input{flex:1;font-size:12px;padding:5px 8px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);outline:none;}
+.quick-inp input:focus{border-color:var(--accent);}
+.qi-add{padding:0 8px;font-size:13px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-weight:600;}
+.qi-add.like{background:rgba(76,175,130,0.13);color:#4caf82;}
+.qi-add.dislike{background:rgba(240,98,146,0.13);color:#f06292;}
+.ratings-sec{margin-top:.75rem;border-top:0.5px solid var(--border);padding-top:.65rem;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.rdots{display:flex;gap:3px;flex-wrap:wrap;}
+.rdot{width:24px;height:24px;border-radius:50%;border:0.5px solid var(--border2);background:transparent;cursor:pointer;font-size:10px;font-weight:600;color:var(--text3);display:inline-flex;align-items:center;justify-content:center;}
+.rdot.low{background:var(--yellow-bg);color:var(--yellow);border-color:var(--yellow);}
+.rdot.mid{background:var(--accent-bg);color:var(--accent);border-color:var(--accent);}
+.rdot.high{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+.rval{font-size:12px;color:var(--text2);margin-top:4px;}
+.fu-sec{margin-top:.75rem;border-top:0.5px solid var(--border);padding-top:.65rem;}
+.fu-item{display:flex;align-items:flex-start;gap:8px;padding:4px 0;}
+.fu-cb{margin-top:2px;flex-shrink:0;accent-color:var(--accent);cursor:pointer;}
+.fu-txt{font-size:12px;flex:1;line-height:1.4;}
+.fu-txt.done{text-decoration:line-through;color:var(--text3);}
+.fu-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;padding:0;}
+.fu-del:hover{color:var(--red);}
+.fu-inp-row{display:flex;gap:6px;margin-top:6px;}
+.fu-inp-row input{flex:1;font-size:12px;padding:6px 10px;background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);outline:none;}
+.fu-inp-row input:focus{border-color:var(--accent);}
+.fu-add{padding:0 12px;font-size:12px;background:var(--accent-bg);border:0.5px solid var(--accent);color:var(--accent);border-radius:var(--radius-sm);cursor:pointer;}
+.card-actions{display:flex;gap:6px;margin-top:.75rem;flex-wrap:wrap;}
+.abtn{font-size:11px;padding:3px 10px;border-radius:20px;border:0.5px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;}
+.abtn:hover{background:var(--surface2);}
+.abtn.danger{color:var(--red);border-color:var(--red);}
+.ldate{font-size:11px;color:var(--text3);margin-top:.5rem;}
+#map-view{display:none;}
+#map{width:100%;height:520px;border-radius:var(--radius);border:0.5px solid var(--border);overflow:hidden;margin-bottom:1rem;}
+.map-legend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:1rem;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);}
+.legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+.map-listing-list{display:grid;gap:8px;}
+.map-listing-row{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:.65rem .9rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+.map-listing-row:hover{border-color:var(--accent);}
+.empty{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:14px;}
+.loading{text-align:center;padding:2rem;color:var(--text3);}
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:var(--surface2);border:0.5px solid var(--border2);border-radius:var(--radius);padding:.6rem 1.2rem;font-size:13px;color:var(--text);box-shadow:0 4px 20px rgba(0,0,0,.4);opacity:0;transition:opacity .2s;pointer-events:none;z-index:9999;}
+.toast.show{opacity:1;}
+.leaflet-popup-content-wrapper{background:#1a1d27!important;color:#e8eaf6!important;border:0.5px solid #2e3250!important;border-radius:8px!important;}
+.leaflet-popup-tip{background:#1a1d27!important;}
+.leaflet-popup-content{margin:10px 14px!important;}
+@media(max-width:480px){
+  .stats{grid-template-columns:repeat(2,1fr);}
+  .form-grid{grid-template-columns:1fr;}
+  .ratings-sec,.likes-sec{grid-template-columns:1fr;}
+}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="top-header">
-    <div>
-      <h1>🏡 Rental Tracker</h1>
-      <span>Eric & Shelby — Bay Area Search</span>
-    </div>
+    <div><h1>🏡 Rental Tracker</h1><span style="font-size:13px;color:var(--text2);">Eric & Shelby — Bay Area Search</span></div>
     <span style="font-size:11px;color:var(--text3);" id="sync-status">Connecting…</span>
   </div>
-
   <div class="stats">
     <div class="stat"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total</div></div>
     <div class="stat"><div class="stat-val" id="s-active">—</div><div class="stat-lbl">Active</div></div>
     <div class="stat"><div class="stat-val" id="s-applied">—</div><div class="stat-lbl">Applied</div></div>
     <div class="stat"><div class="stat-val" id="s-fav">—</div><div class="stat-lbl">Favorited ⭐</div></div>
   </div>
-
   <div class="tabs">
     <button class="tab active" data-tab="listings">📋 Listings</button>
     <button class="tab" data-tab="map">🗺️ Map View</button>
@@ -211,7 +162,6 @@
       <button class="fbtn" data-filter="fav">⭐ Favorited</button>
       <button class="fbtn" data-filter="archived">🗂 Archived</button>
     </div>
-
     <div class="sort-row">
       <label>Sort by</label>
       <select class="sort-select" id="sort-select">
@@ -223,9 +173,7 @@
         <option value="rating-asc">Combined rating (lowest)</option>
       </select>
     </div>
-
     <button class="add-btn" id="btn-add">+ Add a listing</button>
-
     <div id="form-wrap" style="display:none;">
       <div class="form-wrap">
         <div class="sl" id="form-title">New listing</div>
@@ -283,10 +231,7 @@
             </div>
           </div>
         </div>
-        <div class="fsec">
-          <div class="sl">Notes</div>
-          <div class="fr"><textarea id="f-notes" placeholder="Key features, landlord notes, pet policy…"></textarea></div>
-        </div>
+        <div class="fsec"><div class="sl">Notes</div><div class="fr"><textarea id="f-notes" placeholder="Key features, landlord notes, pet policy…"></textarea></div></div>
         <div id="form-err" style="font-size:12px;color:var(--red);display:none;margin-top:4px;"></div>
         <div class="form-actions">
           <button class="btn-save" id="btn-save">Save listing</button>
@@ -294,7 +239,6 @@
         </div>
       </div>
     </div>
-
     <div id="listings-area"><div class="loading">Connecting to database…</div></div>
   </div>
 
@@ -311,7 +255,6 @@
     <div class="map-listing-list" id="map-listing-list"></div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -333,9 +276,11 @@ const col = collection(db, "listings");
 
 let listings = [];
 let filter = 'all';
+let sortBy = 'date-desc';
 let editId = null;
 let mapInstance = null;
 let mapMarkers = [];
+let seeded = false;
 
 const SEED = [
   {id:'richmond-411',address:'411 15th Avenue, Unit 32, San Francisco CA',neighborhood:'Central Richmond',rent:6445,beds:'2bd / 1ba',commute:'25 min public transit',url:'https://rentbt.com/listing/411-15th-avenue-unit-32/',status:'active',appmethod:'',appstatus:'Not yet applied',tourstatus:'Not scheduled',favorited:false,notes:'891 sq ft. In-unit W/D, dishwasher, storage. Pet friendly, smoke-free. Professional mgmt (Brick + Timber). Easy access to Golden Gate Park.',added:'Sep 16',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[],lat:37.7751,lng:-122.4728},
@@ -344,14 +289,50 @@ const SEED = [
   {id:'lake-street-540',address:'540 Lake Street, San Francisco CA',neighborhood:'Inner Richmond / Lake Street',rent:5500,beds:'1bd / 1ba',commute:'30 min public transit',url:'',status:'rejected',appmethod:'Direct email',appstatus:'Denied',tourstatus:'Remote only',favorited:false,notes:'800 sq ft, yard, steps from Mountain Lake Park dog run and Presidio. Landlord loved Jefferson. No pet deposit.',added:'Sep 14',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[],lat:37.7876,lng:-122.4683}
 ];
 
-// GEOCODING via Photon (CORS-friendly, OpenStreetMap-based, no API key needed)
-// Bounding box restricted to Bay Area for accuracy
+// Helpers
+function avgRating(l) {
+  const r = [l.ratingEric, l.ratingShelby].filter(x => x !== null && x !== undefined);
+  return r.length ? r.reduce((a,c) => a+c, 0) / r.length : -1;
+}
+function priceColor(rent) {
+  if (!rent) return '#6c7fff';
+  if (rent < 5500) return '#4caf82';
+  if (rent <= 6500) return '#f0b429';
+  return '#f06292';
+}
+function priceClass(rent, fav, status) {
+  if (status === 'archived') return 'archived';
+  if (fav) return 'favorited';
+  if (!rent) return '';
+  if (rent < 5500) return 'price-green';
+  if (rent <= 6500) return 'price-yellow';
+  return 'price-red';
+}
+function badgeClass(s) {
+  return {active:'badge-active',applied:'badge-applied',rejected:'badge-rejected',tour:'badge-tour',withdrawn:'badge-withdrawn',archived:'badge-archived'}[s] || 'badge-active';
+}
+function badgeLabel(s) {
+  return {active:'Active lead',applied:'Applied',tour:'Tour scheduled',rejected:'Not selected',withdrawn:'Withdrawn',archived:'Archived'}[s] || s;
+}
+function dotClass(i,r) {
+  if (!r || i > r) return '';
+  if (r <= 4) return 'low';
+  if (r <= 7) return 'mid';
+  return 'high';
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// Geocoding via Photon (CORS-friendly, no key needed)
 async function geocode(address) {
   try {
-    const bayAreaTerms = ['CA','California','San Francisco','Oakland','Berkeley','Alameda','Marin','Daly City','Pacifica'];
-    const hasBayArea = bayAreaTerms.some(t => address.includes(t));
-    const query = hasBayArea ? address : address + ', San Francisco, CA';
-    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=1&bbox=-122.6,37.4,-121.9,37.95`;
+    const bayTerms = ['CA','California','San Francisco','Oakland','Berkeley','Alameda','Marin','Daly City','Pacifica'];
+    const hasBay = bayTerms.some(t => address.includes(t));
+    const query = hasBay ? address : address + ', San Francisco, CA';
+    const url = 'https://photon.komoot.io/api/?q=' + encodeURIComponent(query) + '&limit=1&bbox=-122.6,37.4,-121.9,37.95';
     const res = await fetch(url);
     const data = await res.json();
     if (data && data.features && data.features.length > 0) {
@@ -360,29 +341,6 @@ async function geocode(address) {
     }
   } catch(e) { console.warn('Geocoding failed:', e); }
   return null;
-}
-
-function priceColor(rent) {
-  if (!rent) return '#6c7fff';
-  if (rent < 5500) return '#4caf82';
-  if (rent <= 6500) return '#f0b429';
-  return '#f06292';
-}
-function priceClass(rent, fav) {
-  if (fav) return 'favorited';
-  if (!rent) return '';
-  if (rent < 5500) return 'price-green';
-  if (rent <= 6500) return 'price-yellow';
-  return 'price-red';
-}
-function badgeClass(s) { return {active:'badge-active',applied:'badge-applied',rejected:'badge-rejected',tour:'badge-tour',withdrawn:'badge-withdrawn',archived:'badge-archived'}[s]||'badge-active'; }
-function badgeLabel(s) { return {active:'Active lead',applied:'Applied',tour:'Tour scheduled',rejected:'Not selected',withdrawn:'Withdrawn',archived:'Archived'}[s]||s; }
-function dotClass(i,r) { if(!r||i>r)return''; if(r<=4)return'low'; if(r<=7)return'mid'; return'high'; }
-
-function toast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
 }
 
 // MAP
@@ -398,58 +356,48 @@ function renderMap() {
   if (!mapInstance) initMap();
   mapMarkers.forEach(m => m.remove());
   mapMarkers = [];
-  const geoListings = listings.filter(l => l.lat && l.lng && l.status !== "archived");
-  const noGeoListings = listings.filter(l => !l.lat || !l.lng);
+  const geoListings = listings.filter(l => l.lat && l.lng && l.status !== 'archived');
 
   geoListings.forEach(l => {
     const color = l.favorited ? '#f0b429' : priceColor(l.rent);
     const icon = L.divIcon({
-      html: `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);"></div>`,
+      html: '<div style="width:14px;height:14px;border-radius:50%;background:' + color + ';border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);"></div>',
       className: '', iconSize: [14,14], iconAnchor: [7,7]
     });
     const marker = L.marker([l.lat, l.lng], {icon}).addTo(mapInstance);
-    const popup = `
-      <div style="min-width:180px;">
-        <div style="font-size:13px;font-weight:600;margin-bottom:4px;">${l.address}</div>
-        ${l.rent?`<div style="font-size:13px;color:${color};font-weight:600;">$${l.rent.toLocaleString()}/mo</div>`:''}
-        <div style="font-size:11px;color:#9096b8;margin-top:2px;">${l.beds||''}</div>
-        <div style="margin-top:6px;"><span style="font-size:11px;padding:2px 7px;border-radius:20px;background:rgba(108,127,255,0.15);color:#6c7fff;">${badgeLabel(l.status)}</span></div>
-        ${l.url?`<div style="margin-top:6px;"><a href="${l.url}" target="_blank" style="font-size:11px;color:#6c7fff;">View listing →</a></div>`:''}
-      </div>`;
+    const popup = '<div style="min-width:180px;">' +
+      '<div style="font-size:13px;font-weight:600;margin-bottom:4px;">' + l.address + '</div>' +
+      (l.rent ? '<div style="font-size:13px;color:' + color + ';font-weight:600;">$' + l.rent.toLocaleString() + '/mo</div>' : '') +
+      '<div style="font-size:11px;color:#9096b8;margin-top:2px;">' + (l.beds||'') + '</div>' +
+      '<div style="margin-top:6px;"><span style="font-size:11px;padding:2px 7px;border-radius:20px;background:rgba(108,127,255,0.15);color:#6c7fff;">' + badgeLabel(l.status) + '</span></div>' +
+      (l.url ? '<div style="margin-top:6px;"><a href="' + l.url + '" target="_blank" style="font-size:11px;color:#6c7fff;">View listing →</a></div>' : '') +
+      '</div>';
     marker.bindPopup(popup);
     mapMarkers.push(marker);
   });
 
   if (geoListings.length > 1) {
-    const bounds = L.latLngBounds(geoListings.map(l => [l.lat, l.lng]));
-    mapInstance.fitBounds(bounds, {padding: [40,40]});
+    mapInstance.fitBounds(L.latLngBounds(geoListings.map(l => [l.lat, l.lng])), {padding:[40,40]});
   }
 
   const listEl = document.getElementById('map-listing-list');
-  listEl.innerHTML = listings.map(l => {
+  listEl.innerHTML = listings.filter(l => l.status !== 'archived').map(l => {
     const color = l.favorited ? '#f0b429' : priceColor(l.rent);
-    return `<div class="map-listing-row" data-action="fly-to" data-id="${l.id}">
-      <div>
-        <div class="la">${l.favorited?'⭐ ':''}${l.address}</div>
-        <div class="lm">${l.neighborhood||''} ${l.lat?'📍':'<span class="no-geo">· locating…</span>'}</div>
-      </div>
-      <div style="text-align:right;">
-        ${l.rent?`<div class="lp" style="color:${color};">$${l.rent.toLocaleString()}/mo</div>`:''}
-        <span class="badge ${badgeClass(l.status)}" style="margin-top:3px;display:inline-block;">${badgeLabel(l.status)}</span>
-      </div>
-    </div>`;
+    return '<div class="map-listing-row" data-action="fly-to" data-id="' + l.id + '">' +
+      '<div><div class="la">' + (l.favorited?'⭐ ':'') + l.address + '</div>' +
+      '<div class="lm">' + (l.neighborhood||'') + (l.lat ? ' 📍' : ' <span style="font-size:11px;color:var(--text3);">· locating…</span>') + '</div></div>' +
+      '<div style="text-align:right;">' + (l.rent ? '<div class="lp" style="color:' + color + ';">$' + l.rent.toLocaleString() + '/mo</div>' : '') +
+      '<span class="badge ' + badgeClass(l.status) + '" style="display:inline-block;margin-top:3px;">' + badgeLabel(l.status) + '</span></div>' +
+      '</div>';
   }).join('');
 
   setTimeout(() => { if(mapInstance) mapInstance.invalidateSize(); }, 100);
 }
 
+// RENDER
 function render() {
-  // Sort listings first
-  const avgRating = l => {
-    const r = [l.ratingEric, l.ratingShelby].filter(x => x !== null && x !== undefined);
-    return r.length ? r.reduce((a,c)=>a+c,0)/r.length : -1;
-  };
-  const sorted = [...listings].sort((a,b) => {
+  // Sort
+  const sorted = [...listings].sort((a, b) => {
     if (sortBy === 'date-desc') return a.added < b.added ? 1 : -1;
     if (sortBy === 'date-asc') return a.added > b.added ? 1 : -1;
     if (sortBy === 'price-asc') return (a.rent||0) - (b.rent||0);
@@ -459,124 +407,118 @@ function render() {
     return 0;
   });
 
-  let fil = filter === 'archived' ? sorted.filter(l => l.status === 'archived') : filter === 'all' ? sorted.filter(l => l.status !== 'archived') :
+  // Filter
+  const fil = filter === 'archived' ? sorted.filter(l => l.status === 'archived') :
+    filter === 'all' ? sorted.filter(l => l.status !== 'archived') :
     filter === 'fav' ? sorted.filter(l => l.favorited && l.status !== 'archived') :
     sorted.filter(l => l.status === filter && l.status !== 'archived');
 
-  document.getElementById('s-total').textContent = listings.filter(l=>l.status!=='archived').length;
-  document.getElementById('s-active').textContent = listings.filter(l=>l.status==='active').length;
-  document.getElementById('s-applied').textContent = listings.filter(l=>l.status==='applied').length;
-  document.getElementById('s-fav').textContent = listings.filter(l=>l.favorited && l.status!=='archived').length;
+  // Stats
+  document.getElementById('s-total').textContent = listings.filter(l => l.status !== 'archived').length;
+  document.getElementById('s-active').textContent = listings.filter(l => l.status === 'active').length;
+  document.getElementById('s-applied').textContent = listings.filter(l => l.status === 'applied').length;
+  document.getElementById('s-fav').textContent = listings.filter(l => l.favorited && l.status !== 'archived').length;
 
   const area = document.getElementById('listings-area');
   if (!listings.length) { area.innerHTML = '<div class="empty">No listings yet — add one above!</div>'; return; }
   if (!fil.length) { area.innerHTML = '<div class="empty">No listings with this filter.</div>'; return; }
 
   area.innerHTML = fil.map(l => {
-    const pc = l.status === 'archived' ? 'archived' : priceClass(l.rent, l.favorited);
-    const dots = (who) => Array.from({length:10},(_,i)=>{
-      const n=i+1, r=who==='eric'?l.ratingEric:l.ratingShelby;
-      return `<button class="rdot ${dotClass(n,r)}" data-action="rate" data-id="${l.id}" data-who="${who}" data-val="${n}">${n}</button>`;
-    }).join('');
-    const likeChips = (l.likes||[]).map(t=>`<span class="tag-chip like" data-action="del-like" data-id="${l.id}" data-val="${t}">${t}<span class="tx"> ✕</span></span>`).join('');
-    const dislikeChips = (l.dislikes||[]).map(t=>`<span class="tag-chip dislike" data-action="del-dislike" data-id="${l.id}" data-val="${t}">${t}<span class="tx"> ✕</span></span>`).join('');
-    const fuItems = (l.actions||[]).map(a=>`
-      <div class="fu-item">
-        <input type="checkbox" class="fu-cb" data-action="toggle-fu" data-id="${l.id}" data-aid="${a.id}" ${a.done?'checked':''} />
-        <span class="fu-txt ${a.done?'done':''}">${a.text}</span>
-        <button class="fu-del" data-action="del-fu" data-id="${l.id}" data-aid="${a.id}">✕</button>
-      </div>`).join('');
-    const pills = [
-      l.commute?`<span class="pill">🕐 ${l.commute}</span>`:'',
-      l.appmethod?`<span class="pill">📤 ${l.appmethod}</span>`:'',
-      l.appstatus?`<span class="pill">📄 ${l.appstatus}</span>`:'',
-      l.tourstatus?`<span class="pill">🚪 ${l.tourstatus}</span>`:'',
-      l.lat?`<span class="pill">📍 Mapped</span>`:`<span class="pill" style="color:var(--text3);">📍 Locating…</span>`,
-    ].join('');
+    const pc = priceClass(l.rent, l.favorited, l.status);
     const isArchived = l.status === 'archived';
-    const stBtns = [
-      (!isArchived && l.status!=='applied')?`<button class="abtn" data-action="setstatus" data-id="${l.id}" data-val="applied">Mark applied</button>`:'',
-      (!isArchived && l.status!=='tour')?`<button class="abtn" data-action="setstatus" data-id="${l.id}" data-val="tour">Tour scheduled</button>`:'',
-      (!isArchived && l.status!=='rejected')?`<button class="abtn" data-action="setstatus" data-id="${l.id}" data-val="rejected">Not selected</button>`:'',
+    const dots = (who) => Array.from({length:10}, (_, i) => {
+      const n = i+1, r = who === 'eric' ? l.ratingEric : l.ratingShelby;
+      return '<button class="rdot ' + dotClass(n,r) + '" data-action="rate" data-id="' + l.id + '" data-who="' + who + '" data-val="' + n + '">' + n + '</button>';
+    }).join('');
+    const likeChips = (l.likes||[]).map(t => '<span class="tag-chip like" data-action="del-like" data-id="' + l.id + '" data-val="' + t + '">' + t + '<span class="tx"> ✕</span></span>').join('');
+    const dislikeChips = (l.dislikes||[]).map(t => '<span class="tag-chip dislike" data-action="del-dislike" data-id="' + l.id + '" data-val="' + t + '">' + t + '<span class="tx"> ✕</span></span>').join('');
+    const fuItems = (l.actions||[]).map(a =>
+      '<div class="fu-item"><input type="checkbox" class="fu-cb" data-action="toggle-fu" data-id="' + l.id + '" data-aid="' + a.id + '"' + (a.done?' checked':'') + ' />' +
+      '<span class="fu-txt' + (a.done?' done':'') + '">' + a.text + '</span>' +
+      '<button class="fu-del" data-action="del-fu" data-id="' + l.id + '" data-aid="' + a.id + '">✕</button></div>'
+    ).join('');
+    const pills = [
+      l.commute ? '<span class="pill">🕐 ' + l.commute + '</span>' : '',
+      l.appmethod ? '<span class="pill">📤 ' + l.appmethod + '</span>' : '',
+      l.appstatus ? '<span class="pill">📄 ' + l.appstatus + '</span>' : '',
+      l.tourstatus ? '<span class="pill">🚪 ' + l.tourstatus + '</span>' : '',
+      l.lat ? '<span class="pill">📍 Mapped</span>' : '<span class="pill" style="color:var(--text3);">📍 Locating…</span>'
     ].join('');
+    const stBtns = isArchived ? '' : [
+      l.status!=='applied' ? '<button class="abtn" data-action="setstatus" data-id="' + l.id + '" data-val="applied">Mark applied</button>' : '',
+      l.status!=='tour' ? '<button class="abtn" data-action="setstatus" data-id="' + l.id + '" data-val="tour">Tour scheduled</button>' : '',
+      l.status!=='rejected' ? '<button class="abtn" data-action="setstatus" data-id="' + l.id + '" data-val="rejected">Not selected</button>' : ''
+    ].join('');
+    const archiveBtns = isArchived
+      ? '<button class="abtn" data-action="restore" data-id="' + l.id + '">↩️ Restore</button><button class="abtn danger" data-action="delete" data-id="' + l.id + '">🗑 Delete</button>'
+      : '<button class="abtn" data-action="archive" data-id="' + l.id + '">🗂 Archive</button>';
+    const avgR = avgRating(l);
+    const avgDisplay = avgR >= 0 ? ' · Avg: ' + avgR.toFixed(1) + '/10' : '';
 
-    return `<div class="listing ${pc}">
-      <div class="lh">
-        <div class="lh-left"><div class="la">${l.address}</div><div class="lm">${[l.neighborhood,l.beds].filter(Boolean).join(' · ')}</div></div>
-        <div class="lh-right">
-          ${l.rent?`<div class="lp">$${l.rent.toLocaleString()}/mo</div>`:''}
-          <span class="badge ${badgeClass(l.status)}">${badgeLabel(l.status)}</span>
-          <button class="fav-btn ${l.favorited?'on':''}" data-action="fav" data-id="${l.id}">⭐</button>
-        </div>
-      </div>
-      ${l.url?`<div class="llink" data-action="openlink" data-url="${l.url}">🔗 View listing</div>`:''}
-      <div class="pills">${pills}</div>
-      ${l.notes?`<div class="lnotes">${l.notes}</div>`:''}
-      <div class="likes-sec">
-        <div class="likes-col">
-          <div class="sl">👍 Likes</div>
-          <div class="chip-row">${likeChips||'<span style="font-size:11px;color:var(--text3);">None yet</span>'}</div>
-          <div class="quick-inp"><input type="text" class="like-inp" data-id="${l.id}" placeholder="Add a like…" /><button class="qi-add like" data-action="add-like" data-id="${l.id}">+</button></div>
-        </div>
-        <div class="likes-col">
-          <div class="sl">👎 Dislikes</div>
-          <div class="chip-row">${dislikeChips||'<span style="font-size:11px;color:var(--text3);">None yet</span>'}</div>
-          <div class="quick-inp"><input type="text" class="dislike-inp" data-id="${l.id}" placeholder="Add a dislike…" /><button class="qi-add dislike" data-action="add-dislike" data-id="${l.id}">+</button></div>
-        </div>
-      </div>
-      <div class="ratings-sec">
-        <div class="rating-col"><div class="sl">⭐ Eric's rating</div><div class="rdots">${dots('eric')}</div><div class="rval">${l.ratingEric?l.ratingEric+'/10':'Not rated'}</div></div>
-        <div class="rating-col"><div class="sl">⭐ Shelby's rating</div><div class="rdots">${dots('shelby')}</div><div class="rval">${l.ratingShelby?l.ratingShelby+'/10':'Not rated'}</div></div>
-      </div>
-      <div class="fu-sec">
-        <div class="sl">✅ Follow-ups</div>
-        ${(l.actions||[]).length?fuItems:'<div style="font-size:12px;color:var(--text3);padding:2px 0;">No action items yet.</div>'}
-        <div class="fu-inp-row"><input type="text" class="fu-inp" data-id="${l.id}" placeholder="Add a follow-up and press Enter…" /><button class="fu-add" data-action="add-fu" data-id="${l.id}">+</button></div>
-      </div>
-      <div class="ldate">Added ${l.added}</div>
-      <div class="card-actions">
-        <button class="abtn" data-action="edit" data-id="${l.id}">✏️ Edit</button>
-        ${stBtns}
-        ${l.status==='archived' ? `<button class="abtn" data-action="restore" data-id="${l.id}">↩️ Restore</button><button class="abtn danger" data-action="delete" data-id="${l.id}">🗑 Delete</button>` : `<button class="abtn" data-action="archive" data-id="${l.id}">🗂 Archive</button>`}
-      </div>
-    </div>`;
+    return '<div class="listing ' + pc + '">' +
+      '<div class="lh"><div class="lh-left"><div class="la">' + l.address + '</div><div class="lm">' + [l.neighborhood,l.beds].filter(Boolean).join(' · ') + avgDisplay + '</div></div>' +
+      '<div class="lh-right">' + (l.rent ? '<div class="lp">$' + l.rent.toLocaleString() + '/mo</div>' : '') +
+      '<span class="badge ' + badgeClass(l.status) + '">' + badgeLabel(l.status) + '</span>' +
+      '<button class="fav-btn' + (l.favorited?' on':'') + '" data-action="fav" data-id="' + l.id + '">⭐</button></div></div>' +
+      (l.url ? '<div class="llink" data-action="openlink" data-url="' + l.url + '">🔗 View listing</div>' : '') +
+      '<div class="pills">' + pills + '</div>' +
+      (l.notes ? '<div class="lnotes">' + l.notes + '</div>' : '') +
+      '<div class="likes-sec"><div class="likes-col"><div class="sl">👍 Likes</div><div class="chip-row">' + (likeChips||'<span style="font-size:11px;color:var(--text3);">None yet</span>') + '</div>' +
+      '<div class="quick-inp"><input type="text" class="like-inp" data-id="' + l.id + '" placeholder="Add a like…" /><button class="qi-add like" data-action="add-like" data-id="' + l.id + '">+</button></div></div>' +
+      '<div class="likes-col"><div class="sl">👎 Dislikes</div><div class="chip-row">' + (dislikeChips||'<span style="font-size:11px;color:var(--text3);">None yet</span>') + '</div>' +
+      '<div class="quick-inp"><input type="text" class="dislike-inp" data-id="' + l.id + '" placeholder="Add a dislike…" /><button class="qi-add dislike" data-action="add-dislike" data-id="' + l.id + '">+</button></div></div></div>' +
+      '<div class="ratings-sec"><div class="rating-col"><div class="sl">⭐ Eric\'s rating</div><div class="rdots">' + dots('eric') + '</div><div class="rval">' + (l.ratingEric ? l.ratingEric+'/10' : 'Not rated') + '</div></div>' +
+      '<div class="rating-col"><div class="sl">⭐ Shelby\'s rating</div><div class="rdots">' + dots('shelby') + '</div><div class="rval">' + (l.ratingShelby ? l.ratingShelby+'/10' : 'Not rated') + '</div></div></div>' +
+      '<div class="fu-sec"><div class="sl">✅ Follow-ups</div>' + ((l.actions||[]).length ? fuItems : '<div style="font-size:12px;color:var(--text3);padding:2px 0;">No action items yet.</div>') +
+      '<div class="fu-inp-row"><input type="text" class="fu-inp" data-id="' + l.id + '" placeholder="Add a follow-up and press Enter…" /><button class="fu-add" data-action="add-fu" data-id="' + l.id + '">+</button></div></div>' +
+      '<div class="ldate">Added ' + l.added + '</div>' +
+      '<div class="card-actions"><button class="abtn" data-action="edit" data-id="' + l.id + '">✏️ Edit</button>' + stBtns + archiveBtns + '</div>' +
+      '</div>';
   }).join('');
 }
 
-// Firestore listener
-let seeded = false;
+// Firebase listener
 onSnapshot(col, async (snap) => {
   if (snap.empty && !seeded) {
     seeded = true;
     for (const l of SEED) {
-      const geo = await geocode(l.address);
-      if (geo) { l.lat = geo.lat; l.lng = geo.lng; }
       await setDoc(doc(db,'listings',l.id), l);
     }
   } else {
     listings = snap.docs.map(d => ({id:d.id,...d.data()}));
-    // geocode any without coords
-    for (const l of listings) {
+    // Geocode any missing coords
+    listings.forEach(l => {
       if (!l.lat || !l.lng) {
         geocode(l.address).then(geo => {
           if (geo) updateDoc(doc(db,'listings',l.id), {lat:geo.lat, lng:geo.lng});
         });
       }
-    }
+    });
   }
   render();
   const mapTab = document.getElementById('map-view');
   if (mapTab.style.display !== 'none') renderMap();
   document.getElementById('sync-status').textContent = '🟢 Live';
-}, () => { document.getElementById('sync-status').textContent = '🔴 Offline'; });
+}, () => {
+  document.getElementById('sync-status').textContent = '🔴 Offline';
+});
 
 // Sort
-  document.getElementById('sort-select').addEventListener('change', e => {
-    sortBy = e.target.value;
-    render();
-  });
+document.getElementById('sort-select').addEventListener('change', e => {
+  sortBy = e.target.value;
+  render();
+});
 
-  // Tab switching
+// Filter
+document.getElementById('filter-row').addEventListener('click', e => {
+  const b = e.target.closest('.fbtn');
+  if (!b) return;
+  filter = b.dataset.filter;
+  document.querySelectorAll('.fbtn').forEach(x => x.classList.toggle('active', x === b));
+  render();
+});
+
+// Tabs
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -588,32 +530,34 @@ document.querySelectorAll('.tab').forEach(tab => {
   });
 });
 
-// Form
-function showForm(id) {
-  editId = id || null;
-  const l = id ? listings.find(x=>x.id===id) : null;
-  document.getElementById('form-title').textContent = id ? 'Edit listing' : 'New listing';
-  ['address','neighborhood','beds','commute','url','notes'].forEach(k => document.getElementById('f-'+k).value = l?(l[k]||''):'');
-  document.getElementById('f-rent').value = l&&l.rent?l.rent:'';
-  document.getElementById('f-status').value = l?(l.status||'active'):'active';
-  document.getElementById('f-appmethod').value = l?(l.appmethod||''):'';
-  document.getElementById('f-appstatus').value = l?(l.appstatus||''):'';
-  document.getElementById('f-tourstatus').value = l?(l.tourstatus||''):'';
-  document.getElementById('form-err').style.display='none';
-  document.getElementById('form-wrap').style.display='block';
-  document.getElementById('f-address').focus();
-}
-function hideForm() { document.getElementById('form-wrap').style.display='none'; editId=null; }
-
+// Add / Cancel
 document.getElementById('btn-add').addEventListener('click', () => showForm(null));
 document.getElementById('btn-cancel').addEventListener('click', hideForm);
+
+function showForm(id) {
+  editId = id || null;
+  const l = id ? listings.find(x => x.id === id) : null;
+  document.getElementById('form-title').textContent = id ? 'Edit listing' : 'New listing';
+  ['address','neighborhood','beds','commute','url','notes'].forEach(k => document.getElementById('f-'+k).value = l ? (l[k]||'') : '');
+  document.getElementById('f-rent').value = l && l.rent ? l.rent : '';
+  document.getElementById('f-status').value = l ? (l.status||'active') : 'active';
+  document.getElementById('f-appmethod').value = l ? (l.appmethod||'') : '';
+  document.getElementById('f-appstatus').value = l ? (l.appstatus||'') : '';
+  document.getElementById('f-tourstatus').value = l ? (l.tourstatus||'') : '';
+  document.getElementById('form-err').style.display = 'none';
+  document.getElementById('form-wrap').style.display = 'block';
+  document.getElementById('f-address').focus();
+}
+function hideForm() { document.getElementById('form-wrap').style.display = 'none'; editId = null; }
+
+// Save
 document.getElementById('btn-save').addEventListener('click', async () => {
   const address = document.getElementById('f-address').value.trim();
-  if (!address) { const e=document.getElementById('form-err'); e.textContent='Address is required.'; e.style.display='block'; return; }
-  const prev = editId ? listings.find(x=>x.id===editId) : null;
+  if (!address) { const e = document.getElementById('form-err'); e.textContent = 'Address is required.'; e.style.display = 'block'; return; }
+  const prev = editId ? listings.find(x => x.id === editId) : null;
   const rentVal = document.getElementById('f-rent').value;
   const item = {
-    id: editId||Date.now().toString(),
+    id: editId || Date.now().toString(),
     address,
     neighborhood: document.getElementById('f-neighborhood').value.trim(),
     rent: rentVal ? parseInt(rentVal) : null,
@@ -625,17 +569,16 @@ document.getElementById('btn-save').addEventListener('click', async () => {
     appstatus: document.getElementById('f-appstatus').value,
     tourstatus: document.getElementById('f-tourstatus').value,
     notes: document.getElementById('f-notes').value.trim(),
-    favorited: prev?(prev.favorited||false):false,
-    likes: prev?(prev.likes||[]):[],
-    dislikes: prev?(prev.dislikes||[]):[],
-    ratingEric: prev?(prev.ratingEric||null):null,
-    ratingShelby: prev?(prev.ratingShelby||null):null,
-    actions: prev?(prev.actions||[]):[],
-    added: prev?prev.added:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),
-    lat: prev?(prev.lat||null):null,
-    lng: prev?(prev.lng||null):null
+    favorited: prev ? (prev.favorited||false) : false,
+    likes: prev ? (prev.likes||[]) : [],
+    dislikes: prev ? (prev.dislikes||[]) : [],
+    ratingEric: prev ? (prev.ratingEric||null) : null,
+    ratingShelby: prev ? (prev.ratingShelby||null) : null,
+    actions: prev ? (prev.actions||[]) : [],
+    added: prev ? prev.added : new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),
+    lat: prev ? (prev.lat||null) : null,
+    lng: prev ? (prev.lng||null) : null
   };
-  // geocode if address changed or no coords
   const addrChanged = !prev || prev.address !== address;
   if (addrChanged || !item.lat) {
     toast('Saving and locating address…');
@@ -646,55 +589,53 @@ document.getElementById('btn-save').addEventListener('click', async () => {
   hideForm(); toast('Listing saved ✓');
 });
 
-document.getElementById('filter-row') && document.getElementById('filter-row').addEventListener('click', e => {
-  const b = e.target.closest('.fbtn'); if(!b) return;
-  filter = b.dataset.filter;
-  document.querySelectorAll('.fbtn').forEach(x => x.classList.toggle('active', x===b));
-  render();
-});
-
+// Card interactions
 document.getElementById('listings-area').addEventListener('click', async e => {
-  const el = e.target.closest('[data-action]'); if(!el) return;
-  const {action,id,val,who,url,aid} = el.dataset;
-  const l = listings.find(x=>x.id===id);
-
-  if (action==='openlink') { window.open(url,'_blank'); return; }
-  if (action==='edit') { showForm(id); return; }
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  const action = el.dataset.action, id = el.dataset.id;
+  if (action === 'openlink') { window.open(el.dataset.url, '_blank'); return; }
+  if (action === 'edit') { showForm(id); return; }
+  const l = listings.find(x => x.id === id);
   if (!l) return;
-  if (action==='delete') { await deleteDoc(doc(db,'listings',id)); toast('Listing permanently deleted'); return; }
-  if (action==='archive') { await updateDoc(doc(db,'listings',id),{status:'archived'}); toast('Moved to archive 🗂'); return; }
-  if (action==='restore') { await updateDoc(doc(db,'listings',id),{status:'active'}); toast('Restored to active ✓'); return; }
-  if (action==='fav') { await updateDoc(doc(db,'listings',id),{favorited:!l.favorited}); return; }
-  if (action==='setstatus') { await updateDoc(doc(db,'listings',id),{status:val}); toast('Status updated ✓'); return; }
-  if (action==='rate') { const v=parseInt(val); await updateDoc(doc(db,'listings',id), who==='eric'?{ratingEric:v}:{ratingShelby:v}); return; }
-  if (action==='add-like') { const inp=el.closest('.quick-inp').querySelector('.like-inp'); const txt=inp.value.trim(); if(!txt) return; await updateDoc(doc(db,'listings',id),{likes:[...(l.likes||[]),txt]}); inp.value=''; return; }
-  if (action==='add-dislike') { const inp=el.closest('.quick-inp').querySelector('.dislike-inp'); const txt=inp.value.trim(); if(!txt) return; await updateDoc(doc(db,'listings',id),{dislikes:[...(l.dislikes||[]),txt]}); inp.value=''; return; }
-  if (action==='del-like') { await updateDoc(doc(db,'listings',id),{likes:(l.likes||[]).filter(t=>t!==val)}); return; }
-  if (action==='del-dislike') { await updateDoc(doc(db,'listings',id),{dislikes:(l.dislikes||[]).filter(t=>t!==val)}); return; }
-  if (action==='add-fu') { const inp=el.closest('.fu-inp-row').querySelector('.fu-inp'); const txt=inp.value.trim(); if(!txt) return; await updateDoc(doc(db,'listings',id),{actions:[...(l.actions||[]),{id:Date.now().toString(),text:txt,done:false}]}); inp.value=''; return; }
-  if (action==='del-fu') { await updateDoc(doc(db,'listings',id),{actions:(l.actions||[]).filter(a=>a.id!==aid)}); return; }
+  if (action === 'delete') { await deleteDoc(doc(db,'listings',id)); toast('Listing permanently deleted'); return; }
+  if (action === 'archive') { await updateDoc(doc(db,'listings',id), {status:'archived'}); toast('Moved to archive 🗂'); return; }
+  if (action === 'restore') { await updateDoc(doc(db,'listings',id), {status:'active'}); toast('Restored to active ✓'); return; }
+  if (action === 'fav') { await updateDoc(doc(db,'listings',id), {favorited:!l.favorited}); return; }
+  if (action === 'setstatus') { await updateDoc(doc(db,'listings',id), {status:el.dataset.val}); toast('Status updated ✓'); return; }
+  if (action === 'rate') { const v = parseInt(el.dataset.val); await updateDoc(doc(db,'listings',id), el.dataset.who==='eric'?{ratingEric:v}:{ratingShelby:v}); return; }
+  if (action === 'add-like') { const inp = el.closest('.quick-inp').querySelector('.like-inp'); const txt = inp.value.trim(); if(!txt) return; await updateDoc(doc(db,'listings',id),{likes:[...(l.likes||[]),txt]}); inp.value=''; return; }
+  if (action === 'add-dislike') { const inp = el.closest('.quick-inp').querySelector('.dislike-inp'); const txt = inp.value.trim(); if(!txt) return; await updateDoc(doc(db,'listings',id),{dislikes:[...(l.dislikes||[]),txt]}); inp.value=''; return; }
+  if (action === 'del-like') { await updateDoc(doc(db,'listings',id),{likes:(l.likes||[]).filter(t=>t!==el.dataset.val)}); return; }
+  if (action === 'del-dislike') { await updateDoc(doc(db,'listings',id),{dislikes:(l.dislikes||[]).filter(t=>t!==el.dataset.val)}); return; }
+  if (action === 'add-fu') { const inp = el.closest('.fu-inp-row').querySelector('.fu-inp'); const txt = inp.value.trim(); if(!txt) return; await updateDoc(doc(db,'listings',id),{actions:[...(l.actions||[]),{id:Date.now().toString(),text:txt,done:false}]}); inp.value=''; return; }
+  if (action === 'del-fu') { await updateDoc(doc(db,'listings',id),{actions:(l.actions||[]).filter(a=>a.id!==el.dataset.aid)}); return; }
 });
 
 document.getElementById('listings-area').addEventListener('change', async e => {
-  const el=e.target.closest('[data-action]'); if(!el) return;
-  if (el.dataset.action==='toggle-fu') {
-    const {id,aid}=el.dataset, l=listings.find(x=>x.id===id); if(!l) return;
-    await updateDoc(doc(db,'listings',id),{actions:(l.actions||[]).map(a=>a.id===aid?{...a,done:!a.done}:a)});
-  }
+  const el = e.target.closest('[data-action]');
+  if (!el || el.dataset.action !== 'toggle-fu') return;
+  const id = el.dataset.id, aid = el.dataset.aid;
+  const l = listings.find(x => x.id === id);
+  if (!l) return;
+  await updateDoc(doc(db,'listings',id), {actions:(l.actions||[]).map(a => a.id===aid ? {...a,done:!a.done} : a)});
 });
 
 document.getElementById('listings-area').addEventListener('keydown', async e => {
-  if (e.key!=='Enter') return;
-  const fuInp=e.target.closest('.fu-inp'), likeInp=e.target.closest('.like-inp'), dislikeInp=e.target.closest('.dislike-inp');
+  if (e.key !== 'Enter') return;
+  const fuInp = e.target.closest('.fu-inp');
+  const likeInp = e.target.closest('.like-inp');
+  const dislikeInp = e.target.closest('.dislike-inp');
   if (fuInp) { const id=fuInp.dataset.id,txt=fuInp.value.trim(),l=listings.find(x=>x.id===id); if(!txt||!l) return; await updateDoc(doc(db,'listings',id),{actions:[...(l.actions||[]),{id:Date.now().toString(),text:txt,done:false}]}); fuInp.value=''; }
   if (likeInp) { const id=likeInp.dataset.id,txt=likeInp.value.trim(),l=listings.find(x=>x.id===id); if(!txt||!l) return; await updateDoc(doc(db,'listings',id),{likes:[...(l.likes||[]),txt]}); likeInp.value=''; }
   if (dislikeInp) { const id=dislikeInp.dataset.id,txt=dislikeInp.value.trim(),l=listings.find(x=>x.id===id); if(!txt||!l) return; await updateDoc(doc(db,'listings',id),{dislikes:[...(l.dislikes||[]),txt]}); dislikeInp.value=''; }
 });
 
-document.getElementById('map-listing-list') && document.getElementById('map-listing-list').addEventListener('click', e => {
-  const row = e.target.closest('[data-action="fly-to"]'); if(!row) return;
-  const l = listings.find(x=>x.id===row.dataset.id);
-  if (l&&l.lat&&l.lng&&mapInstance) { mapInstance.flyTo([l.lat,l.lng],15); }
+document.getElementById('map-listing-list').addEventListener('click', e => {
+  const row = e.target.closest('[data-action="fly-to"]');
+  if (!row) return;
+  const l = listings.find(x => x.id === row.dataset.id);
+  if (l && l.lat && l.lng && mapInstance) mapInstance.flyTo([l.lat, l.lng], 15);
 });
 </script>
 </body>
