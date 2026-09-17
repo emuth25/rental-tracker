@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bay Area Rental Tracker — Eric & Shelby</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3250;
+    --border2: #3a3f60;
+    --text: #e8eaf6;
+    --text2: #9096b8;
+    --text3: #5a6080;
+    --accent: #6c7fff;
+    --accent-bg: rgba(108,127,255,0.12);
+    --green: #4caf82;
+    --green-bg: rgba(76,175,130,0.13);
+    --yellow: #f0b429;
+    --yellow-bg: rgba(240,180,41,0.13);
+    --red: #f06292;
+    --red-bg: rgba(240,98,146,0.13);
+    --purple: #b39ddb;
+    --purple-bg: rgba(179,157,219,0.13);
+    --like-color: #4caf82;
+    --like-bg: rgba(76,175,130,0.13);
+    --dislike-color: #f06292;
+    --dislike-bg: rgba(240,98,146,0.13);
+    --fav: #f0b429;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+  .app { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+  .top-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+  .top-header h1 { font-size: 20px; font-weight: 600; color: var(--text); }
+  .top-header span { font-size: 14px; color: var(--text2); }
+  .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 1.25rem; }
+  .stat { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: .65rem .75rem; text-align: center; }
+  .stat-val { font-size: 22px; font-weight: 600; color: var(--text); }
+  .stat-lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .sl { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .5rem; }
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+  .fbtn { font-size: 12px; padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; transition: all .15s; }
+  .fbtn.active { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+  .add-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: .75rem; margin-bottom: 1rem; font-size: 14px; font-weight: 500; cursor: pointer; border-radius: var(--radius); border: 0.5px dashed var(--border2); background: transparent; color: var(--text2); transition: all .15s; }
+  .add-btn:hover { background: var(--surface); color: var(--text); }
+
+  /* FORM */
+  .form-wrap { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .fr { margin-bottom: .75rem; }
+  .fr label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; }
+  .fr input, .fr select, .fr textarea {
+    width: 100%; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+    color: var(--text); font-size: 13px; padding: 8px 10px; outline: none; transition: border .15s;
+  }
+  .fr input:focus, .fr select:focus, .fr textarea:focus { border-color: var(--accent); }
+  .fr textarea { height: 70px; resize: none; }
+  .fr select option { background: #1a1d27; }
+  .fsec { border-top: 0.5px solid var(--border); padding-top: .75rem; margin-top: .75rem; }
+  .tag-input-wrap { display: flex; gap: 6px; }
+  .tag-input-wrap input { flex: 1; }
+  .tag-add { padding: 0 12px; background: var(--accent-bg); border: 0.5px solid var(--accent); border-radius: var(--radius-sm); color: var(--accent); font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .tags-display { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; min-height: 10px; }
+  .tag-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 8px; border-radius: 20px; cursor: pointer; }
+  .tag-chip.like { background: var(--like-bg); color: var(--like-color); border: 0.5px solid var(--like-color); }
+  .tag-chip.dislike { background: var(--dislike-bg); color: var(--dislike-color); border: 0.5px solid var(--dislike-color); }
+  .tag-chip .tx { font-size: 11px; opacity: .6; margin-left: 2px; }
+  .form-actions { display: flex; gap: 8px; margin-top: 1rem; }
+  .btn-save { flex: 1; padding: .6rem; font-size: 14px; font-weight: 600; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); cursor: pointer; }
+  .btn-cancel { padding: .6rem 1rem; font-size: 14px; background: transparent; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); color: var(--text2); cursor: pointer; }
+
+  /* LISTING CARD */
+  .listing {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: var(--radius); padding: 1rem; margin-bottom: .75rem;
+    border-left: 3px solid transparent; transition: border-color .2s;
+  }
+  .listing.price-green { border-left-color: var(--green); }
+  .listing.price-yellow { border-left-color: var(--yellow); }
+  .listing.price-red { border-left-color: var(--red); }
+  .listing.favorited { border-left-color: var(--fav); }
+  .lh { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: .5rem; }
+  .lh-left { flex: 1; min-width: 0; }
+  .lh-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+  .la { font-size: 14px; font-weight: 600; color: var(--text); }
+  .lm { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .lp { font-size: 15px; font-weight: 600; }
+  .price-green .lp { color: var(--green); }
+  .price-yellow .lp { color: var(--yellow); }
+  .price-red .lp { color: var(--red); }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+  .badge-active { background: var(--accent-bg); color: var(--accent); }
+  .badge-applied { background: var(--yellow-bg); color: var(--yellow); }
+  .badge-rejected { background: var(--red-bg); color: var(--red); }
+  .badge-tour { background: var(--purple-bg); color: var(--purple); }
+  .badge-withdrawn { background: var(--surface2); color: var(--text3); }
+  .fav-btn { background: none; border: none; cursor: pointer; font-size: 18px; opacity: .4; transition: opacity .15s, transform .15s; line-height: 1; }
+  .fav-btn.on { opacity: 1; transform: scale(1.15); }
+  .pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 20px; background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border2); }
+  .lnotes { font-size: 12px; color: var(--text2); margin-top: .5rem; font-style: italic; line-height: 1.4; }
+  .llink { font-size: 12px; color: var(--accent); margin-top: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+
+  /* LIKES / DISLIKES */
+  .likes-sec { margin-top: .75rem; border-top: 0.5px solid var(--border); padding-top: .65rem; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .likes-col .sl { margin-bottom: 4px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 4px; min-height: 10px; margin-bottom: 4px; }
+  .quick-inp { display: flex; gap: 4px; }
+  .quick-inp input { flex: 1; font-size: 12px; padding: 5px 8px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); outline: none; }
+  .quick-inp input:focus { border-color: var(--accent); }
+  .qi-add { padding: 0 8px; font-size: 12px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-weight: 600; }
+  .qi-add.like { background: var(--like-bg); color: var(--like-color); }
+  .qi-add.dislike { background: var(--dislike-bg); color: var(--dislike-color); }
+
+  /* RATINGS */
+  .ratings-sec { margin-top: .75rem; border-top: 0.5px solid var(--border); padding-top: .65rem; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .rating-col .sl { margin-bottom: 6px; }
+  .rdots { display: flex; gap: 3px; flex-wrap: wrap; }
+  .rdot { width: 24px; height: 24px; border-radius: 50%; border: 0.5px solid var(--border2); background: transparent; cursor: pointer; font-size: 10px; font-weight: 600; color: var(--text3); display: inline-flex; align-items: center; justify-content: center; transition: all .1s; }
+  .rdot.low { background: var(--yellow-bg); color: var(--yellow); border-color: var(--yellow); }
+  .rdot.mid { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+  .rdot.high { background: var(--green-bg); color: var(--green); border-color: var(--green); }
+  .rval { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  /* FOLLOW-UPS */
+  .fu-sec { margin-top: .75rem; border-top: 0.5px solid var(--border); padding-top: .65rem; }
+  .fu-item { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0; }
+  .fu-cb { margin-top: 2px; flex-shrink: 0; accent-color: var(--accent); cursor: pointer; }
+  .fu-txt { font-size: 12px; color: var(--text); flex: 1; line-height: 1.4; }
+  .fu-txt.done { text-decoration: line-through; color: var(--text3); }
+  .fu-del { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 14px; padding: 0; }
+  .fu-del:hover { color: var(--red); }
+  .fu-inp-row { display: flex; gap: 6px; margin-top: 6px; }
+  .fu-inp-row input { flex: 1; font-size: 12px; padding: 6px 10px; background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); outline: none; }
+  .fu-inp-row input:focus { border-color: var(--accent); }
+  .fu-add { padding: 0 12px; font-size: 12px; background: var(--accent-bg); border: 0.5px solid var(--accent); color: var(--accent); border-radius: var(--radius-sm); cursor: pointer; }
+
+  /* CARD ACTIONS */
+  .card-actions { display: flex; gap: 6px; margin-top: .75rem; flex-wrap: wrap; }
+  .abtn { font-size: 11px; padding: 3px 10px; border-radius: 20px; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; }
+  .abtn:hover { background: var(--surface2); color: var(--text); }
+  .abtn.danger { color: var(--red); border-color: var(--red); }
+  .ldate { font-size: 11px; color: var(--text3); margin-top: .5rem; }
+
+  /* EMPTY */
+  .empty { text-align: center; padding: 3rem 1rem; color: var(--text3); font-size: 14px; }
+  .loading { text-align: center; padding: 2rem; color: var(--text3); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: .6rem 1.2rem; font-size: 13px; color: var(--text); box-shadow: 0 4px 20px rgba(0,0,0,.4); opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 99; }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 480px) {
+    .stats { grid-template-columns: repeat(2,1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+    .ratings-sec, .likes-sec { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top-header">
+    <div>
+      <h1>🏡 Rental Tracker</h1>
+      <span>Eric & Shelby — Bay Area Search</span>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <span style="font-size:11px;color:var(--text3);" id="sync-status">Connecting…</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="s-total">—</div><div class="stat-lbl">Total</div></div>
+    <div class="stat"><div class="stat-val" id="s-active">—</div><div class="stat-lbl">Active</div></div>
+    <div class="stat"><div class="stat-val" id="s-applied">—</div><div class="stat-lbl">Applied</div></div>
+    <div class="stat"><div class="stat-val" id="s-fav">—</div><div class="stat-lbl">Favorited ⭐</div></div>
+  </div>
+
+  <div class="filter-row" id="filter-row">
+    <button class="fbtn active" data-filter="all">All</button>
+    <button class="fbtn" data-filter="active">Active</button>
+    <button class="fbtn" data-filter="applied">Applied</button>
+    <button class="fbtn" data-filter="tour">Tour</button>
+    <button class="fbtn" data-filter="rejected">Not selected</button>
+    <button class="fbtn" data-filter="fav">⭐ Favorited</button>
+  </div>
+
+  <button class="add-btn" id="btn-add">+ Add a listing</button>
+
+  <div id="form-wrap" style="display:none;">
+    <div class="form-wrap">
+      <div class="sl" id="form-title">New listing</div>
+      <div class="form-grid">
+        <div class="fr" style="grid-column:1/-1"><label>Address</label><input type="text" id="f-address" placeholder="709 Broderick Street, San Francisco CA" /></div>
+        <div class="fr"><label>Neighborhood</label><input type="text" id="f-neighborhood" placeholder="NoPa, Noe Valley…" /></div>
+        <div class="fr"><label>Monthly rent ($)</label><input type="number" id="f-rent" placeholder="5500" /></div>
+        <div class="fr"><label>Beds / baths</label><input type="text" id="f-beds" placeholder="2bd / 1ba" /></div>
+        <div class="fr"><label>Commute time</label><input type="text" id="f-commute" placeholder="20 min BART" /></div>
+        <div class="fr" style="grid-column:1/-1"><label>Listing URL</label><input type="text" id="f-url" placeholder="https://zillow.com/…" /></div>
+      </div>
+      <div class="fsec">
+        <div class="sl">Status</div>
+        <div class="form-grid">
+          <div class="fr"><label>Lead status</label>
+            <select id="f-status">
+              <option value="active">Active lead</option>
+              <option value="applied">Applied</option>
+              <option value="tour">Tour scheduled</option>
+              <option value="rejected">Not selected</option>
+              <option value="withdrawn">Withdrawn</option>
+            </select>
+          </div>
+          <div class="fr"><label>Application method</label>
+            <select id="f-appmethod">
+              <option value="">—</option>
+              <option value="Zillow">Zillow</option>
+              <option value="Apartments.com">Apartments.com</option>
+              <option value="Direct email">Direct email</option>
+              <option value="Text">Text</option>
+              <option value="Phone">Phone</option>
+              <option value="In person">In person</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="fr"><label>Application status</label>
+            <select id="f-appstatus">
+              <option value="">—</option>
+              <option value="Not yet applied">Not yet applied</option>
+              <option value="Submitted">Submitted</option>
+              <option value="Under review">Under review</option>
+              <option value="Approved">Approved</option>
+              <option value="Denied">Denied</option>
+            </select>
+          </div>
+          <div class="fr"><label>Tour status</label>
+            <select id="f-tourstatus">
+              <option value="">—</option>
+              <option value="Not scheduled">Not scheduled</option>
+              <option value="Scheduled">Scheduled</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Remote only">Remote only</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="fsec">
+        <div class="sl">Notes</div>
+        <div class="fr"><textarea id="f-notes" placeholder="Key features, landlord notes, pet policy…"></textarea></div>
+      </div>
+      <div id="form-err" style="font-size:12px;color:var(--red);display:none;margin-top:4px;"></div>
+      <div class="form-actions">
+        <button class="btn-save" id="btn-save">Save listing</button>
+        <button class="btn-cancel" id="btn-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="listings-area"><div class="loading">Connecting to database…</div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB7YagwnNE7GnE_Gv4WedSgftNAbm_9GJw",
+  authDomain: "bay-area-rental-app-tracker.firebaseapp.com",
+  projectId: "bay-area-rental-app-tracker",
+  storageBucket: "bay-area-rental-app-tracker.firebasestorage.app",
+  messagingSenderId: "486908354979",
+  appId: "1:486908354979:web:120565e76baee901e57a16",
+  measurementId: "G-MXZWHWXQVQ"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const col = collection(db, "listings");
+
+let listings = [];
+let filter = 'all';
+let editId = null;
+
+// Seed data
+const SEED = [
+  {id:'richmond-411',address:'411 15th Avenue, Unit 32, San Francisco CA',neighborhood:'Central Richmond',rent:6445,beds:'2bd / 1ba',commute:'25 min public transit',url:'https://rentbt.com/listing/411-15th-avenue-unit-32/',status:'active',appmethod:'',appstatus:'Not yet applied',tourstatus:'Not scheduled',favorited:false,notes:'891 sq ft. In-unit W/D, dishwasher, storage. Pet friendly, smoke-free. Professional mgmt (Brick + Timber). Easy access to Golden Gate Park.',added:'Sep 16',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[]},
+  {id:'broderick-709',address:'709 Broderick Street, San Francisco CA',neighborhood:'NoPa / Divisadero',rent:4995,beds:'1bd / 1ba',commute:'20 min public transit',url:'',status:'active',appmethod:'Zillow',appstatus:'Not yet applied',tourstatus:'Not scheduled',favorited:false,notes:'Historic Victorian, hardwood floors, huge living room with original columns, renovated bath, eat-in kitchen with gas range, dishwasher, exposed brick. Laundry in building. Huge shared deck. Pet friendly, no pet deposit, $100/mo pet rent.',added:'Sep 14',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[]},
+  {id:'noe-valley-94131',address:'Noe Valley (Undisclosed), San Francisco CA 94131',neighborhood:'Noe Valley',rent:6000,beds:'2bd / 1ba',commute:'15 min walk to 24th St BART',url:'https://www.zillow.com/homedetails/(Undisclosed-Address)-San-Francisco-CA-94131/119685230_zpid/',status:'applied',appmethod:'Zillow',appstatus:'Submitted',tourstatus:'Not scheduled',favorited:false,notes:'Edwardian flat, remodeled kitchen, W/D in-building, hardwood floors, 9ft curved ceilings, French doors. Walk Score 94. Dogs allowed. Parking +$500/mo. Available 9/20. Renters insurance required.',added:'Sep 14',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[]},
+  {id:'lake-street-540',address:'540 Lake Street, San Francisco CA',neighborhood:'Inner Richmond / Lake Street',rent:5500,beds:'1bd / 1ba',commute:'30 min public transit',url:'',status:'rejected',appmethod:'Direct email',appstatus:'Denied',tourstatus:'Remote only',favorited:false,notes:'800 sq ft, yard, steps from Mountain Lake Park dog run and Presidio. Landlord loved Jefferson. No pet deposit.',added:'Sep 14',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[]}
+];
+
+function priceClass(rent) {
+  if (!rent) return '';
+  if (rent < 5500) return 'price-green';
+  if (rent <= 6500) return 'price-yellow';
+  return 'price-red';
+}
+function badgeClass(s) { return {active:'badge-active',applied:'badge-applied',rejected:'badge-rejected',tour:'badge-tour',withdrawn:'badge-withdrawn'}[s]||'badge-active'; }
+function badgeLabel(s) { return {active:'Active lead',applied:'Applied',tour:'Tour scheduled',rejected:'Not selected',withdrawn:'Withdrawn'}[s]||s; }
+function dotClass(i,r) { if(!r||i>r)return''; if(r<=4)return'low'; if(r<=7)return'mid'; return'high'; }
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function render() {
+  let fil = filter === 'all' ? listings :
+    filter === 'fav' ? listings.filter(l => l.favorited) :
+    listings.filter(l => l.status === filter);
+
+  document.getElementById('s-total').textContent = listings.length;
+  document.getElementById('s-active').textContent = listings.filter(l=>l.status==='active').length;
+  document.getElementById('s-applied').textContent = listings.filter(l=>l.status==='applied').length;
+  document.getElementById('s-fav').textContent = listings.filter(l=>l.favorited).length;
+
+  const area = document.getElementById('listings-area');
+  if (!listings.length) { area.innerHTML = '<div class="empty">No listings yet — add one above!</div>'; return; }
+  if (!fil.length) { area.innerHTML = '<div class="empty">No listings with this filter.</div>'; return; }
+
+  area.innerHTML = fil.map(l => {
+    const pc = l.favorited ? 'favorited' : priceClass(l.rent);
+    const dots = (who) => Array.from({length:10},(_,i)=>{
+      const n=i+1, r=who==='eric'?l.ratingEric:l.ratingShelby;
+      return `<button class="rdot ${dotClass(n,r)}" data-action="rate" data-id="${l.id}" data-who="${who}" data-val="${n}">${n}</button>`;
+    }).join('');
+    const likeChips = (l.likes||[]).map(t=>`<span class="tag-chip like" data-action="del-like" data-id="${l.id}" data-val="${t}">${t}<span class="tx">✕</span></span>`).join('');
+    const dislikeChips = (l.dislikes||[]).map(t=>`<span class="tag-chip dislike" data-action="del-dislike" data-id="${l.id}" data-val="${t}">${t}<span class="tx">✕</span></span>`).join('');
+    const fuItems = (l.actions||[]).map(a=>`
+      <div class="fu-item">
+        <input type="checkbox" class="fu-cb" data-action="toggle-fu" data-id="${l.id}" data-aid="${a.id}" ${a.done?'checked':''} />
+        <span class="fu-txt ${a.done?'done':''}">${a.text}</span>
+        <button class="fu-del" data-action="del-fu" data-id="${l.id}" data-aid="${a.id}">✕</button>
+      </div>`).join('');
+    const pills = [
+      l.commute?`<span class="pill">🕐 ${l.commute}</span>`:'',
+      l.appmethod?`<span class="pill">📤 ${l.appmethod}</span>`:'',
+      l.appstatus?`<span class="pill">📄 ${l.appstatus}</span>`:'',
+      l.tourstatus?`<span class="pill">🚪 ${l.tourstatus}</span>`:'',
+    ].join('');
+    const stBtns = [
+      l.status!=='applied'?`<button class="abtn" data-action="setstatus" data-id="${l.id}" data-val="applied">Mark applied</button>`:'',
+      l.status!=='tour'?`<button class="abtn" data-action="setstatus" data-id="${l.id}" data-val="tour">Tour scheduled</button>`:'',
+      l.status!=='rejected'?`<button class="abtn" data-action="setstatus" data-id="${l.id}" data-val="rejected">Not selected</button>`:'',
+    ].join('');
+
+    return `<div class="listing ${pc}">
+      <div class="lh">
+        <div class="lh-left">
+          <div class="la">${l.address}</div>
+          <div class="lm">${[l.neighborhood,l.beds].filter(Boolean).join(' · ')}</div>
+        </div>
+        <div class="lh-right">
+          ${l.rent?`<div class="lp">$${l.rent.toLocaleString()}/mo</div>`:''}
+          <span class="badge ${badgeClass(l.status)}">${badgeLabel(l.status)}</span>
+          <button class="fav-btn ${l.favorited?'on':''}" data-action="fav" data-id="${l.id}" title="${l.favorited?'Unfavorite':'Favorite'}">⭐</button>
+        </div>
+      </div>
+      ${l.url?`<div class="llink" data-action="openlink" data-url="${l.url}">🔗 View listing</div>`:''}
+      <div class="pills">${pills}</div>
+      ${l.notes?`<div class="lnotes">${l.notes}</div>`:''}
+
+      <div class="likes-sec">
+        <div class="likes-col">
+          <div class="sl">👍 Likes</div>
+          <div class="chip-row">${likeChips||'<span style="font-size:11px;color:var(--text3);">None yet</span>'}</div>
+          <div class="quick-inp">
+            <input type="text" class="like-inp" data-id="${l.id}" placeholder="Add a like…" />
+            <button class="qi-add like" data-action="add-like" data-id="${l.id}">+</button>
+          </div>
+        </div>
+        <div class="likes-col">
+          <div class="sl">👎 Dislikes</div>
+          <div class="chip-row">${dislikeChips||'<span style="font-size:11px;color:var(--text3);">None yet</span>'}</div>
+          <div class="quick-inp">
+            <input type="text" class="dislike-inp" data-id="${l.id}" placeholder="Add a dislike…" />
+            <button class="qi-add dislike" data-action="add-dislike" data-id="${l.id}">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ratings-sec">
+        <div class="rating-col">
+          <div class="sl">⭐ Eric's rating</div>
+          <div class="rdots">${dots('eric')}</div>
+          <div class="rval">${l.ratingEric?l.ratingEric+'/10':'Not rated'}</div>
+        </div>
+        <div class="rating-col">
+          <div class="sl">⭐ Shelby's rating</div>
+          <div class="rdots">${dots('shelby')}</div>
+          <div class="rval">${l.ratingShelby?l.ratingShelby+'/10':'Not rated'}</div>
+        </div>
+      </div>
+
+      <div class="fu-sec">
+        <div class="sl">✅ Follow-ups</div>
+        ${(l.actions||[]).length?fuItems:'<div style="font-size:12px;color:var(--text3);padding:2px 0;">No action items yet.</div>'}
+        <div class="fu-inp-row">
+          <input type="text" class="fu-inp" data-id="${l.id}" placeholder="Add a follow-up and press Enter…" />
+          <button class="fu-add" data-action="add-fu" data-id="${l.id}">+</button>
+        </div>
+      </div>
+
+      <div class="ldate">Added ${l.added}</div>
+      <div class="card-actions">
+        <button class="abtn" data-action="edit" data-id="${l.id}">✏️ Edit</button>
+        ${stBtns}
+        <button class="abtn danger" data-action="delete" data-id="${l.id}">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// Firestore real-time listener
+onSnapshot(col, (snap) => {
+  if (snap.empty && listings.length === 0) {
+    // Seed initial data
+    SEED.forEach(l => setDoc(doc(db,'listings',l.id), l));
+  } else {
+    listings = snap.docs.map(d => ({id:d.id,...d.data()}));
+    listings.sort((a,b) => (a.added < b.added ? 1 : -1));
+  }
+  render();
+  document.getElementById('sync-status').textContent = '🟢 Live';
+}, (err) => {
+  document.getElementById('sync-status').textContent = '🔴 Offline';
+  console.error(err);
+});
+
+// Form helpers
+function showForm(id) {
+  editId = id || null;
+  const l = id ? listings.find(x=>x.id===id) : null;
+  document.getElementById('form-title').textContent = id ? 'Edit listing' : 'New listing';
+  ['address','neighborhood','beds','commute','url','notes'].forEach(k => document.getElementById('f-'+k).value = l?(l[k]||''):'');
+  document.getElementById('f-rent').value = l&&l.rent?l.rent:'';
+  document.getElementById('f-status').value = l?(l.status||'active'):'active';
+  document.getElementById('f-appmethod').value = l?(l.appmethod||')':'';
+  document.getElementById('f-appstatus').value = l?(l.appstatus||''):'';
+  document.getElementById('f-tourstatus').value = l?(l.tourstatus||''):'';
+  document.getElementById('form-err').style.display='none';
+  document.getElementById('form-wrap').style.display='block';
+  document.getElementById('f-address').focus();
+}
+function hideForm() { document.getElementById('form-wrap').style.display='none'; editId=null; }
+
+// Events
+document.getElementById('btn-add').addEventListener('click', () => showForm(null));
+document.getElementById('btn-cancel').addEventListener('click', hideForm);
+document.getElementById('btn-save').addEventListener('click', async () => {
+  const address = document.getElementById('f-address').value.trim();
+  if (!address) { const e=document.getElementById('form-err'); e.textContent='Address is required.'; e.style.display='block'; return; }
+  const prev = editId ? listings.find(x=>x.id===editId) : null;
+  const rentVal = document.getElementById('f-rent').value;
+  const item = {
+    id: editId||Date.now().toString(),
+    address,
+    neighborhood: document.getElementById('f-neighborhood').value.trim(),
+    rent: rentVal ? parseInt(rentVal) : null,
+    beds: document.getElementById('f-beds').value.trim(),
+    commute: document.getElementById('f-commute').value.trim(),
+    url: document.getElementById('f-url').value.trim(),
+    status: document.getElementById('f-status').value,
+    appmethod: document.getElementById('f-appmethod').value,
+    appstatus: document.getElementById('f-appstatus').value,
+    tourstatus: document.getElementById('f-tourstatus').value,
+    notes: document.getElementById('f-notes').value.trim(),
+    favorited: prev?(prev.favorited||false):false,
+    likes: prev?(prev.likes||[]):[],
+    dislikes: prev?(prev.dislikes||[]):[],
+    ratingEric: prev?(prev.ratingEric||null):null,
+    ratingShelby: prev?(prev.ratingShelby||null):null,
+    actions: prev?(prev.actions||[]):[],
+    added: prev?prev.added:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})
+  };
+  await setDoc(doc(db,'listings',item.id), item);
+  hideForm(); toast('Listing saved ✓');
+});
+
+document.getElementById('filter-row').addEventListener('click', e => {
+  const b = e.target.closest('.fbtn'); if(!b) return;
+  filter = b.dataset.filter;
+  document.querySelectorAll('.fbtn').forEach(x => x.classList.toggle('active', x===b));
+  render();
+});
+
+document.getElementById('listings-area').addEventListener('click', async e => {
+  const el = e.target.closest('[data-action]'); if(!el) return;
+  const {action,id,val,who,url,aid} = el.dataset;
+  const l = listings.find(x=>x.id===id); if(!l&&action!=='openlink') return;
+
+  if (action==='openlink') { window.open(url,'_blank'); return; }
+  if (action==='edit') { showForm(id); return; }
+  if (action==='delete') { await deleteDoc(doc(db,'listings',id)); toast('Listing removed'); return; }
+  if (action==='fav') { await updateDoc(doc(db,'listings',id),{favorited:!l.favorited}); return; }
+  if (action==='setstatus') { await updateDoc(doc(db,'listings',id),{status:val}); toast('Status updated ✓'); return; }
+  if (action==='rate') {
+    const v=parseInt(val);
+    const upd = who==='eric'?{ratingEric:v}:{ratingShelby:v};
+    await updateDoc(doc(db,'listings',id),upd); return;
+  }
+  if (action==='add-like') {
+    const inp=el.closest('.quick-inp').querySelector('.like-inp');
+    const txt=inp.value.trim(); if(!txt) return;
+    await updateDoc(doc(db,'listings',id),{likes:[...(l.likes||[]),txt]});
+    inp.value=''; return;
+  }
+  if (action==='add-dislike') {
+    const inp=el.closest('.quick-inp').querySelector('.dislike-inp');
+    const txt=inp.value.trim(); if(!txt) return;
+    await updateDoc(doc(db,'listings',id),{dislikes:[...(l.dislikes||[]),txt]});
+    inp.value=''; return;
+  }
+  if (action==='del-like') { await updateDoc(doc(db,'listings',id),{likes:(l.likes||[]).filter(t=>t!==val)}); return; }
+  if (action==='del-dislike') { await updateDoc(doc(db,'listings',id),{dislikes:(l.dislikes||[]).filter(t=>t!==val)}); return; }
+  if (action==='add-fu') {
+    const inp=el.closest('.fu-inp-row').querySelector('.fu-inp');
+    const txt=inp.value.trim(); if(!txt) return;
+    await updateDoc(doc(db,'listings',id),{actions:[...(l.actions||[]),{id:Date.now().toString(),text:txt,done:false}]});
+    inp.value=''; return;
+  }
+  if (action==='del-fu') { await updateDoc(doc(db,'listings',id),{actions:(l.actions||[]).filter(a=>a.id!==aid)}); return; }
+});
+
+document.getElementById('listings-area').addEventListener('change', async e => {
+  const el=e.target.closest('[data-action]'); if(!el) return;
+  if (el.dataset.action==='toggle-fu') {
+    const {id,aid}=el.dataset;
+    const l=listings.find(x=>x.id===id); if(!l) return;
+    await updateDoc(doc(db,'listings',id),{actions:(l.actions||[]).map(a=>a.id===aid?{...a,done:!a.done}:a)});
+  }
+});
+
+document.getElementById('listings-area').addEventListener('keydown', async e => {
+  if (e.key!=='Enter') return;
+  const fuInp = e.target.closest('.fu-inp');
+  const likeInp = e.target.closest('.like-inp');
+  const dislikeInp = e.target.closest('.dislike-inp');
+  if (fuInp) {
+    const id=fuInp.dataset.id, txt=fuInp.value.trim(); if(!txt) return;
+    const l=listings.find(x=>x.id===id); if(!l) return;
+    await updateDoc(doc(db,'listings',id),{actions:[...(l.actions||[]),{id:Date.now().toString(),text:txt,done:false}]});
+    fuInp.value='';
+  }
+  if (likeInp) {
+    const id=likeInp.dataset.id, txt=likeInp.value.trim(); if(!txt) return;
+    const l=listings.find(x=>x.id===id); if(!l) return;
+    await updateDoc(doc(db,'listings',id),{likes:[...(l.likes||[]),txt]});
+    likeInp.value='';
+  }
+  if (dislikeInp) {
+    const id=dislikeInp.dataset.id, txt=dislikeInp.value.trim(); if(!txt) return;
+    const l=listings.find(x=>x.id===id); if(!l) return;
+    await updateDoc(doc(db,'listings',id),{dislikes:[...(l.dislikes||[]),txt]});
+    dislikeInp.value='';
+  }
+});
+</script>
+</body>
+</html>
