@@ -157,6 +157,11 @@
   .map-listing-row .lp { font-size: 13px; }
   .no-geo { font-size: 12px; color: var(--text3); font-style: italic; }
 
+
+  .sort-row { display: flex; align-items: center; gap: 8px; margin-bottom: 1rem; }
+  .sort-row label { font-size: 12px; color: var(--text2); white-space: nowrap; }
+  .sort-select { font-size: 12px; padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border2); background: var(--surface2); color: var(--text); outline: none; cursor: pointer; }
+  .sort-select:focus { border-color: var(--accent); }
   .empty { text-align: center; padding: 3rem 1rem; color: var(--text3); font-size: 14px; }
   .loading { text-align: center; padding: 2rem; color: var(--text3); }
   .toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--surface2); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: .6rem 1.2rem; font-size: 13px; color: var(--text); box-shadow: 0 4px 20px rgba(0,0,0,.4); opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 9999; }
@@ -205,6 +210,18 @@
       <button class="fbtn" data-filter="rejected">Not selected</button>
       <button class="fbtn" data-filter="fav">⭐ Favorited</button>
       <button class="fbtn" data-filter="archived">🗂 Archived</button>
+    </div>
+
+    <div class="sort-row">
+      <label>Sort by</label>
+      <select class="sort-select" id="sort-select">
+        <option value="date-desc">Date added (newest)</option>
+        <option value="date-asc">Date added (oldest)</option>
+        <option value="price-asc">Price (low to high)</option>
+        <option value="price-desc">Price (high to low)</option>
+        <option value="rating-desc">Combined rating (highest)</option>
+        <option value="rating-asc">Combined rating (lowest)</option>
+      </select>
     </div>
 
     <button class="add-btn" id="btn-add">+ Add a listing</button>
@@ -523,7 +540,19 @@ onSnapshot(col, async (snap) => {
     }
   } else {
     listings = snap.docs.map(d => ({id:d.id,...d.data()}));
-    listings.sort((a,b) => a.added < b.added ? 1 : -1);
+    listings.sort((a,b) => {
+      const avgRating = l => {
+        const r = [l.ratingEric, l.ratingShelby].filter(x => x !== null && x !== undefined);
+        return r.length ? r.reduce((a,b)=>a+b,0)/r.length : -1;
+      };
+      if (sortBy === 'date-desc') return a.added < b.added ? 1 : -1;
+      if (sortBy === 'date-asc') return a.added > b.added ? 1 : -1;
+      if (sortBy === 'price-asc') return (a.rent||0) - (b.rent||0);
+      if (sortBy === 'price-desc') return (b.rent||0) - (a.rent||0);
+      if (sortBy === 'rating-desc') return avgRating(b) - avgRating(a);
+      if (sortBy === 'rating-asc') return avgRating(a) - avgRating(b);
+      return 0;
+    });
     // geocode any without coords
     for (const l of listings) {
       if (!l.lat || !l.lng) {
@@ -539,7 +568,13 @@ onSnapshot(col, async (snap) => {
   document.getElementById('sync-status').textContent = '🟢 Live';
 }, () => { document.getElementById('sync-status').textContent = '🔴 Offline'; });
 
-// Tab switching
+// Sort
+  document.getElementById('sort-select').addEventListener('change', e => {
+    sortBy = e.target.value;
+    render();
+  });
+
+  // Tab switching
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
