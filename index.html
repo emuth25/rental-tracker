@@ -443,7 +443,7 @@ function showForm(id) {
   ['address','neighborhood','beds','commute','url','notes'].forEach(k => document.getElementById('f-'+k).value = l?(l[k]||''):'');
   document.getElementById('f-rent').value = l&&l.rent?l.rent:'';
   document.getElementById('f-status').value = l?(l.status||'active'):'active';
-  document.getElementById('f-appmethod').value = l?(l.appmethod||')':'';
+  document.getElementById('f-appmethod').value = l?(l.appmethod||''):'';
   document.getElementById('f-appstatus').value = l?(l.appstatus||''):'';
   document.getElementById('f-tourstatus').value = l?(l.tourstatus||''):'';
   document.getElementById('form-err').style.display='none';
