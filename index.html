@@ -321,21 +321,25 @@ let mapInstance = null;
 let mapMarkers = [];
 
 const SEED = [
-  {id:'richmond-411',address:'411 15th Avenue, Unit 32, San Francisco CA',neighborhood:'Central Richmond',rent:6445,beds:'2bd / 1ba',commute:'25 min public transit',url:'https://rentbt.com/listing/411-15th-avenue-unit-32/',status:'active',appmethod:'',appstatus:'Not yet applied',tourstatus:'Not scheduled',favorited:false,notes:'891 sq ft. In-unit W/D, dishwasher, storage. Pet friendly, smoke-free. Professional mgmt (Brick + Timber). Easy access to Golden Gate Park.',added:'Sep 16',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[],lat:null,lng:null},
-  {id:'broderick-709',address:'709 Broderick Street, San Francisco CA',neighborhood:'NoPa / Divisadero',rent:4995,beds:'1bd / 1ba',commute:'20 min public transit',url:'',status:'active',appmethod:'Zillow',appstatus:'Not yet applied',tourstatus:'Not scheduled',favorited:false,notes:'Historic Victorian, hardwood floors, huge living room with original columns, renovated bath, eat-in kitchen with gas range, dishwasher, exposed brick. Laundry in building. Huge shared deck. Pet friendly, no pet deposit, $100/mo pet rent.',added:'Sep 14',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[],lat:null,lng:null},
-  {id:'noe-valley-94131',address:'Noe Valley, San Francisco CA 94131',neighborhood:'Noe Valley',rent:6000,beds:'2bd / 1ba',commute:'15 min walk to 24th St BART',url:'https://www.zillow.com/homedetails/(Undisclosed-Address)-San-Francisco-CA-94131/119685230_zpid/',status:'applied',appmethod:'Zillow',appstatus:'Submitted',tourstatus:'Not scheduled',favorited:false,notes:'Edwardian flat, remodeled kitchen, W/D in-building, hardwood floors, 9ft curved ceilings, French doors. Walk Score 94. Dogs allowed. Parking +$500/mo. Available 9/20.',added:'Sep 14',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[],lat:null,lng:null},
-  {id:'lake-street-540',address:'540 Lake Street, San Francisco CA',neighborhood:'Inner Richmond / Lake Street',rent:5500,beds:'1bd / 1ba',commute:'30 min public transit',url:'',status:'rejected',appmethod:'Direct email',appstatus:'Denied',tourstatus:'Remote only',favorited:false,notes:'800 sq ft, yard, steps from Mountain Lake Park dog run and Presidio. Landlord loved Jefferson. No pet deposit.',added:'Sep 14',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[],lat:null,lng:null}
+  {id:'richmond-411',address:'411 15th Avenue, Unit 32, San Francisco CA',neighborhood:'Central Richmond',rent:6445,beds:'2bd / 1ba',commute:'25 min public transit',url:'https://rentbt.com/listing/411-15th-avenue-unit-32/',status:'active',appmethod:'',appstatus:'Not yet applied',tourstatus:'Not scheduled',favorited:false,notes:'891 sq ft. In-unit W/D, dishwasher, storage. Pet friendly, smoke-free. Professional mgmt (Brick + Timber). Easy access to Golden Gate Park.',added:'Sep 16',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[],lat:37.7751,lng:-122.4728},
+  {id:'broderick-709',address:'709 Broderick Street, San Francisco CA',neighborhood:'NoPa / Divisadero',rent:4995,beds:'1bd / 1ba',commute:'20 min public transit',url:'',status:'active',appmethod:'Zillow',appstatus:'Not yet applied',tourstatus:'Not scheduled',favorited:false,notes:'Historic Victorian, hardwood floors, huge living room with original columns, renovated bath, eat-in kitchen with gas range, dishwasher, exposed brick. Laundry in building. Huge shared deck. Pet friendly, no pet deposit, $100/mo pet rent.',added:'Sep 14',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[],lat:37.7734,lng:-122.4378},
+  {id:'noe-valley-94131',address:'Noe Valley, San Francisco CA 94131',neighborhood:'Noe Valley',rent:6000,beds:'2bd / 1ba',commute:'15 min walk to 24th St BART',url:'https://www.zillow.com/homedetails/(Undisclosed-Address)-San-Francisco-CA-94131/119685230_zpid/',status:'applied',appmethod:'Zillow',appstatus:'Submitted',tourstatus:'Not scheduled',favorited:false,notes:'Edwardian flat, remodeled kitchen, W/D in-building, hardwood floors, 9ft curved ceilings, French doors. Walk Score 94. Dogs allowed. Parking +$500/mo. Available 9/20.',added:'Sep 14',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[],lat:37.7527,lng:-122.4328},
+  {id:'lake-street-540',address:'540 Lake Street, San Francisco CA',neighborhood:'Inner Richmond / Lake Street',rent:5500,beds:'1bd / 1ba',commute:'30 min public transit',url:'',status:'rejected',appmethod:'Direct email',appstatus:'Denied',tourstatus:'Remote only',favorited:false,notes:'800 sq ft, yard, steps from Mountain Lake Park dog run and Presidio. Landlord loved Jefferson. No pet deposit.',added:'Sep 14',likes:[],dislikes:[],ratingEric:null,ratingShelby:null,actions:[],lat:37.7876,lng:-122.4683}
 ];
 
-// GEOCODING
+// GEOCODING via Photon (CORS-friendly, OpenStreetMap-based, no API key needed)
+// Bounding box restricted to Bay Area for accuracy
 async function geocode(address) {
   try {
-    const query = address.includes('CA') || address.includes('California') ? address : address + ', San Francisco Bay Area, CA';
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'en', 'User-Agent': 'BayAreaRentalTracker/1.0' } });
+    const bayAreaTerms = ['CA','California','San Francisco','Oakland','Berkeley','Alameda','Marin','Daly City','Pacifica'];
+    const hasBayArea = bayAreaTerms.some(t => address.includes(t));
+    const query = hasBayArea ? address : address + ', San Francisco, CA';
+    const url = `https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=1&bbox=-122.6,37.4,-121.9,37.95`;
+    const res = await fetch(url);
     const data = await res.json();
-    if (data && data.length > 0) {
-      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    if (data && data.features && data.features.length > 0) {
+      const [lng, lat] = data.features[0].geometry.coordinates;
+      return { lat, lng };
     }
   } catch(e) { console.warn('Geocoding failed:', e); }
   return null;
